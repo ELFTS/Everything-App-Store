@@ -4,25 +4,85 @@
       "name": "微信电脑版",
       "desc": "手机电脑消息同步，便捷办公沟通，支持文件传输、小程序打开",
       "image": "https://picsum.photos/400/220",
-      "downloadUrl": "https://pc.weixin.qq.com/"
+      "downloadUrl": "https://pc.weixin.qq.com/",
+      "category": "办公软件"
     },
     {
       "name": "QQ电脑版",
       "desc": "经典社交软件，支持群聊、文件传输、远程协助、截图工具",
       "image": "https://picsum.photos/401/220",
-      "downloadUrl": "https://im.qq.com/pcqq/"
+      "downloadUrl": "https://im.qq.com/pcqq/",
+      "category": "办公软件"
+    },
+    {
+      "name": "WPS Office 免费版",
+      "desc": "兼容微软Office，支持文字、表格、PPT、PDF，云端同步，无广告",
+      "image": "https://picsum.photos/402/220",
+      "downloadUrl": "https://www.wps.cn/",
+      "category": "办公软件"
+    },
+    {
+      "name": "网易云音乐",
+      "desc": "无损音质音乐播放器，海量曲库，支持歌词显示、歌单收藏，纯净版无广告",
+      "image": "https://picsum.photos/403/220",
+      "downloadUrl": "https://music.163.com/",
+      "category": "影音播放"
+    },
+    {
+      "name": "PotPlayer 播放器",
+      "desc": "万能视频播放器，支持所有格式，倍速播放、字幕匹配，轻量无捆绑",
+      "image": "https://picsum.photos/404/220",
+      "downloadUrl": "https://potplayer.daum.net/",
+      "category": "影音播放"
     },
     {
       "name": "迅雷极速版",
-      "desc": "高速下载工具，纯净无广告，支持磁力链接、种子下载",
-      "image": "https://picsum.photos/402/220",
-      "downloadUrl": "https://www.xunlei.com/"
+      "desc": "高速下载工具，纯净无广告，支持磁力链接、种子下载、网盘加速",
+      "image": "https://picsum.photos/405/220",
+      "downloadUrl": "https://www.xunlei.com/",
+      "category": "工具软件"
     },
     {
       "name": "7-Zip解压",
-      "desc": "免费开源解压软件，支持所有压缩格式，压缩比高",
-      "image": "https://picsum.photos/403/220",
-      "downloadUrl": "https://www.7-zip.org/"
+      "desc": "免费开源解压软件，支持所有压缩格式，压缩比高，无广告无捆绑",
+      "image": "https://picsum.photos/406/220",
+      "downloadUrl": "https://www.7-zip.org/",
+      "category": "工具软件"
+    },
+    {
+      "name": "火绒安全",
+      "desc": "轻量级杀毒软件，无广告无弹窗，拦截恶意软件，保护电脑安全",
+      "image": "https://picsum.photos/407/220",
+      "downloadUrl": "https://www.huorong.cn/",
+      "category": "工具软件"
+    },
+    {
+      "name": "Edge浏览器",
+      "desc": "微软官方浏览器，双核加速，兼容所有网页，内置翻译、收藏同步",
+      "image": "https://picsum.photos/408/220",
+      "downloadUrl": "https://www.microsoft.com/zh-cn/microsoft-edge",
+      "category": "浏览器"
+    },
+    {
+      "name": "Chrome浏览器",
+      "desc": "谷歌浏览器，高速稳定，扩展插件丰富，开发者必备，纯净版",
+      "image": "https://picsum.photos/409/220",
+      "downloadUrl": "https://www.google.cn/chrome/",
+      "category": "浏览器"
+    },
+    {
+      "name": "VS Code 编辑器",
+      "desc": "微软开源代码编辑器，轻量强大，插件丰富，支持所有编程语言",
+      "image": "https://picsum.photos/410/220",
+      "downloadUrl": "https://code.visualstudio.com/",
+      "category": "开发工具"
+    },
+    {
+      "name": "Node.js 环境",
+      "desc": "JavaScript运行环境，前端开发必备，npm包管理，跨平台兼容",
+      "image": "https://picsum.photos/411/220",
+      "downloadUrl": "https://nodejs.org/zh-cn/",
+      "category": "开发工具"
     }
   ]
 }
