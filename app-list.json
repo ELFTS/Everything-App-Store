@@ -1,0 +1,28 @@
+{
+  "apps": [
+    {
+      "name": "微信电脑版",
+      "desc": "手机电脑消息同步，便捷办公沟通，支持文件传输、小程序打开",
+      "image": "https://picsum.photos/400/220",
+      "downloadUrl": "https://pc.weixin.qq.com/"
+    },
+    {
+      "name": "QQ电脑版",
+      "desc": "经典社交软件，支持群聊、文件传输、远程协助、截图工具",
+      "image": "https://picsum.photos/401/220",
+      "downloadUrl": "https://im.qq.com/pcqq/"
+    },
+    {
+      "name": "迅雷极速版",
+      "desc": "高速下载工具，纯净无广告，支持磁力链接、种子下载",
+      "image": "https://picsum.photos/402/220",
+      "downloadUrl": "https://www.xunlei.com/"
+    },
+    {
+      "name": "7-Zip解压",
+      "desc": "免费开源解压软件，支持所有压缩格式，压缩比高",
+      "image": "https://picsum.photos/403/220",
+      "downloadUrl": "https://www.7-zip.org/"
+    }
+  ]
+}
