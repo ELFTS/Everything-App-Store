@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>万物应用商店</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container" id="app-container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="sidebar-menu-group">
+        <div class="sidebar-menu-title">应用商店</div>
+        <div class="sidebar-menu-item menu-item active" data-page="home-page">首页推荐</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">软件分类</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">最新上线</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">热门排行</div>
+      </div>
+      <div class="sidebar-menu-group">
+        <div class="sidebar-menu-title">我的应用</div>
+        <div class="sidebar-menu-item menu-item" data-page="installed-page">已安装软件</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">下载管理</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">收藏列表</div>
+      </div>
+      <div class="sidebar-menu-group">
+        <div class="sidebar-menu-title">系统设置</div>
+        <div class="sidebar-menu-item menu-item" data-page="home-page">通用设置</div>
+        <div class="sidebar-menu-item menu-item" data-page="about-page">关于我们</div>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <div class="content-wrap">
+        <div class="page-container">
+          <!-- 首页 -->
+          <div class="page-item show" id="home-page">
+            <div class="mb-7 text-center">
+              <p class="text-gray-500 text-base">Windows 纯净应用下载中心 · 完美兼容 Win7/10/11 · 无捆绑 | 无广告 | 无插件</p>
+            </div>
+            <div class="flex justify-center flex-wrap gap-3 mb-8" id="category-nav">
+              <span class="category-item active" data-category="全部">全部应用</span>
+              <span class="category-item" data-category="办公软件">办公软件</span>
+              <span class="category-item" data-category="影音播放">影音播放</span>
+              <span class="category-item" data-category="工具软件">工具软件</span>
+              <span class="category-item" data-category="浏览器">浏览器</span>
+              <span class="category-item" data-category="开发工具">开发工具</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="home-app-grid"></div>
+          </div>
+
+          <!-- 已安装软件页面 -->
+          <div class="page-item" id="installed-page">
+            <div class="installed-title">✅ 本机已安装软件列表 (真实读取)</div>
+            <div id="software-list-container" class="software-list">
+              <div class="loading-text">正在扫描本机已安装软件，请稍候...</div>
+            </div>
+          </div>
+
+          <!-- 关于页面【核心修改：文字图标 → PNG图片】 -->
+          <div class="page-item" id="about-page">
+            <div class="about-page">
+              <!-- 原来的文字：<div class="about-logo">📦</div> -->
+              <img src="./images/about-logo.png" class="about-logo" alt="万物应用商店logo">
+              <div class="about-title">万物应用商店</div>
+              <div class="about-version">版本号 v1.0.0 正式版</div>
+              <div class="about-desc">
+                一款纯净、安全、无广告的Windows应用下载工具，<br/>
+                精选海量优质软件，一键下载安装，拒绝捆绑和流氓软件。<br/><br/>
+                我们致力于为用户提供极致的下载体验，所有软件均经过安全检测，<br/>
+                保证绿色无毒，放心使用！<br/><br/>
+                不忘初心，方得始终，感谢您的支持与信任！
+              </div>
+              <div class="about-copyright">© 2026 万物应用商店 版权所有 | 保留所有权利</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 标题栏 -->
+    <div class="title-bar">
+      <div class="text-xl font-bold text-gray-800">万物应用商店</div>
+      <div class="flex gap-1">
+        <button id="min-btn" class="window-btn">
+          <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
+        </button>
+        <button id="max-btn" class="window-btn">
+          <svg class="max-icon" viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/></svg>
+          <svg class="unmax-icon hidden" viewBox="0 0 16 16"><path d="M4 4h6v6H4zM8 8h6v6H8z"/></svg>
+        </button>
+        <button id="close-btn" class="window-btn close-btn">
+          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

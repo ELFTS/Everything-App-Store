@@ -1,0 +1,45 @@
+{
+  "name": "everything-app-store",
+  "version": "1.0.0",
+  "main": "main.js",
+  "author": "万物永存技术工作室",
+  "description": "万物应用商店",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:32": "electron-builder --win --ia32",
+    "build:64": "electron-builder --win --x64",
+    "build": "npm run build:32 && npm run build:64"
+  },
+  "build": {
+    "appId": "com.lanyun.everythingappstore",
+    "productName": "万物应用商店",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "artifactName": "${productName}-${arch}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "万物应用商店",
+      "runAfterFinish": true,
+      "menuCategory": true
+    }
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "23.6.0"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.3"
+  }
+}
