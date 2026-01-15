@@ -79,20 +79,37 @@
       </div>
     </div>
 
-    <!-- 标题栏 -->
+    <!-- 标题栏（新增搜索框） -->
     <div class="title-bar">
-      <div class="text-xl font-bold text-gray-800">万物应用商店</div>
-      <div class="flex gap-1">
-        <button id="min-btn" class="window-btn">
-          <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
-        </button>
-        <button id="max-btn" class="window-btn">
-          <svg class="max-icon" viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/></svg>
-          <svg class="unmax-icon hidden" viewBox="0 0 16 16"><path d="M4 4h6v6H4zM8 8h6v6H8z"/></svg>
-        </button>
-        <button id="close-btn" class="window-btn close-btn">
-          <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
-        </button>
+      <!-- 保留标题文字 + 新增搜索框容器 -->
+      <div class="title-bar-left">
+        <div class="text-xl font-bold text-gray-800">万物应用商店</div>
+        <div class="title-bar-search">
+          <div class="search-wrapper">
+            <input type="text" id="search-input" placeholder="🔍 搜索软件名称/分类..." class="search-input">
+            <div class="search-icon">🔍</div>
+          </div>
+          <!-- 热门软件弹窗 -->
+          <div id="hot-apps-container" class="hot-apps-container hidden">
+            <div class="hot-apps-title">🔥 热门软件</div>
+            <div class="hot-apps-list" id="hot-apps-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="title-bar-right">
+        <div class="title-bar-menu-item" id="download-manager-btn">下载管理</div>
+        <div class="flex gap-1">
+          <button id="min-btn" class="window-btn">
+            <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
+          </button>
+          <button id="max-btn" class="window-btn">
+            <svg class="max-icon" viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/></svg>
+            <svg class="unmax-icon hidden" viewBox="0 0 16 16"><path d="M4 4h6v6H4zM8 8h6v6H8z"/></svg>
+          </button>
+          <button id="close-btn" class="window-btn close-btn">
+            <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>

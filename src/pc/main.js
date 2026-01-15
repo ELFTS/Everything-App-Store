@@ -1,7 +1,9 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron')
-const path = require('path')
-const { exec } = require('child_process');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
 const iconv = require('iconv-lite');
+const { exec } = require('child_process');
+const fs = require('fs');
+const { handleUninstall } = require('./uninstall-handler'); // 引入卸载处理模块
 
 let mainWindow = null
 let isWindowMaximized = false
@@ -119,59 +121,9 @@ ipcMain.on('get-installed-software', async (event) => {
   event.sender.send('installed-software-list', softwareList);
 });
 
-// 卸载逻辑（兼容unins000.exe）
-ipcMain.on('uninstall-software', (event, uninstallCmd) => {
-  // 空命令校验
-  if (!uninstallCmd || uninstallCmd.trim() === '') {
-    event.sender.send('uninstall-result', { 
-      success: false, 
-      msg: '该软件无有效卸载程序！' 
-    });
-    return;
-  }
-
-  // 精准提取所有.exe完整路径
-  let fixedUninstallCmd = uninstallCmd.trim();
-  const exePathMatch = fixedUninstallCmd.match(/^(.+?\.exe)(\s+.*)?$/i);
-  if (exePathMatch) {
-    const exePath = exePathMatch[1];
-    const args = exePathMatch[2] || '';
-    fixedUninstallCmd = `"${exePath}"${args}`;
-  } else {
-    if (!fixedUninstallCmd.startsWith('"')) {
-      fixedUninstallCmd = `"${fixedUninstallCmd}"`;
-    }
-  }
-
-  // 执行卸载命令
-  exec(fixedUninstallCmd, { 
-    encoding: 'buffer',
-    windowsHide: true,
-    cwd: path.dirname(fixedUninstallCmd.replace(/"/g, ''))
-  }, (err, stdout, stderr) => {
-    if (err) {
-      const errorMsg = iconv.decode(stderr || Buffer.from(err.message), 'gbk');
-      let finalMsg = '';
-      if (errorMsg.includes('不是内部或外部命令')) {
-        finalMsg = `卸载失败：找不到卸载程序（如unins000.exe），请检查路径是否正确！\n原始路径：${uninstallCmd}`;
-      } else if (errorMsg.includes('拒绝访问')) {
-        finalMsg = '卸载失败：权限不足，请以管理员身份运行本程序！';
-      } else if (errorMsg.includes('系统找不到指定文件')) {
-        finalMsg = `卸载失败：卸载程序（如unins000.exe）不存在，请手动卸载！`;
-      } else {
-        finalMsg = `卸载失败：${errorMsg || '卸载程序执行异常，请手动卸载！'}`;
-      }
-      event.sender.send('uninstall-result', { 
-        success: false, 
-        msg: finalMsg 
-      });
-      return;
-    }
-    event.sender.send('uninstall-result', { 
-      success: true, 
-      msg: '卸载程序已启动，请按照向导提示完成卸载！' 
-    });
-  });
+// 卸载逻辑（兼容unins000.exe、uninst.exe等常见卸载程序）
+ipcMain.on('uninstall-software', (event, uninstallCmd, softwareName) => {
+  handleUninstall(event, uninstallCmd, softwareName);
 });
 
 app.whenReady().then(() => {

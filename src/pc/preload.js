@@ -1,17 +1,60 @@
-const { contextBridge, ipcRenderer, shell } = require('electron');
+// 检查是否在渲染进程中
+if (typeof window !== 'undefined') {
+  // 搜索框动画效果
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    
+    if (searchInput) {
+      // 当搜索框获得焦点时，稍微放大并改变边框颜色
+      searchInput.addEventListener('focus', () => {
+        searchInput.style.transform = 'scaleX(1.05)';
+        searchInput.style.borderColor = '#165DFF';
+        searchInput.parentElement.style.width = '105%';
+        searchInput.parentElement.style.maxWidth = '315px';
+      });
+      
+      // 当搜索框失去焦点时，恢复原始状态
+      searchInput.addEventListener('blur', () => {
+        searchInput.style.transform = 'scaleX(1)';
+        searchInput.style.borderColor = '#d1d5db';
+        searchInput.parentElement.style.width = '100%';
+        searchInput.parentElement.style.maxWidth = '300px';
+      });
+      
+      // 悬停效果
+      searchInput.addEventListener('mouseenter', () => {
+        if (!searchInput.matches(':focus')) {
+          searchInput.parentElement.style.width = '102.5%';
+          searchInput.parentElement.style.maxWidth = '307.5px';
+        }
+      });
+      
+      searchInput.addEventListener('mouseleave', () => {
+        if (!searchInput.matches(':focus')) {
+          searchInput.parentElement.style.width = '100%';
+          searchInput.parentElement.style.maxWidth = '300px';
+        }
+      });
+    }
+  });
+}
 
-// 向渲染进程暴露安全API
+const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 窗口控制
-  minimizeWindow: () => ipcRenderer.send('window-control', 'minimize'),
-  maximizeWindow: () => ipcRenderer.send('window-control', 'maximize'),
-  closeWindow: () => ipcRenderer.send('window-control', 'close'),
-  onMaxStateChange: (callback) => ipcRenderer.on('window-max-state', (e, state) => callback(state)),
-
-  // 软件管理
+  closeApp: () => ipcRenderer.invoke('close-app'),
+  minimizeApp: () => ipcRenderer.invoke('minimize-app'),
+  maximizeApp: () => ipcRenderer.invoke('maximize-app'),
+  unmaximizeApp: () => ipcRenderer.invoke('unmaximize-app'),
+  getAppInfo: () => ipcRenderer.invoke('get-app-info'),
   getInstalledSoftware: () => ipcRenderer.invoke('get-installed-software'),
-  uninstallSoftware: (cmd) => ipcRenderer.invoke('uninstall-software', cmd),
+  installApp: (appName) => ipcRenderer.invoke('install-app', appName),
+  uninstallApp: (appName, uninstallCmd) => ipcRenderer.invoke('uninstall-app', appName, uninstallCmd),
+  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url)
+});
 
-  // 打开外部链接（下载/更新用）
-  openExternal: (url) => shell.openExternal(url)
+// 添加卸载进度监听器
+contextBridge.exposeInMainWorld('uninstallAPI', {
+  onUninstallProgress: (callback) => ipcRenderer.on('uninstall-progress', callback),
+  onUninstallResult: (callback) => ipcRenderer.on('uninstall-result', callback),
+  onInstalledSoftwareListUpdated: (callback) => ipcRenderer.on('installed-software-list-updated', callback)
 });
