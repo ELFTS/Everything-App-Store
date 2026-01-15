@@ -4,7 +4,7 @@
       "name": "微信电脑版",
       "desc": "手机电脑消息同步，便捷办公沟通，支持文件传输、小程序打开",
       "image": "https://picsum.photos/400/220",
-      "downloadUrl": "https://pc.weixin.qq.com/",
+      "downloadUrl": "https://dldir1.qq.com/weixin/Windows/WeChatSetup.exe",
       "category": "办公软件"
     },
     {
@@ -46,35 +46,35 @@
       "name": "7-Zip解压",
       "desc": "免费开源解压软件，支持所有压缩格式，压缩比高，无广告无捆绑",
       "image": "https://picsum.photos/406/220",
-      "downloadUrl": "https://www.7-zip.org/",
+      "downloadUrl": "https://www.7-zip.org/a/7z2501-x64.exe",
       "category": "工具软件"
     },
     {
       "name": "火绒安全",
       "desc": "轻量级杀毒软件，无广告无弹窗，拦截恶意软件，保护电脑安全",
       "image": "https://picsum.photos/407/220",
-      "downloadUrl": "https://www.huorong.cn/",
+      "downloadUrl": "https://down5.huorong.cn/hr_installer.exe",
       "category": "工具软件"
     },
     {
       "name": "Edge浏览器",
       "desc": "微软官方浏览器，双核加速，兼容所有网页，内置翻译、收藏同步",
       "image": "https://picsum.photos/408/220",
-      "downloadUrl": "https://www.microsoft.com/zh-cn/microsoft-edge",
+      "downloadUrl": "https://go.microsoft.com/fwlink/?LinkID=2093437",
       "category": "浏览器"
     },
     {
       "name": "Chrome浏览器",
       "desc": "谷歌浏览器，高速稳定，扩展插件丰富，开发者必备，纯净版",
       "image": "https://picsum.photos/409/220",
-      "downloadUrl": "https://www.google.cn/chrome/",
+      "downloadUrl": "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi",
       "category": "浏览器"
     },
     {
       "name": "VS Code 编辑器",
       "desc": "微软开源代码编辑器，轻量强大，插件丰富，支持所有编程语言",
       "image": "https://picsum.photos/410/220",
-      "downloadUrl": "https://code.visualstudio.com/",
+      "downloadUrl": "https://update.code.visualstudio.com/latest/win32-x64/stable",
       "category": "开发工具"
     },
     {
@@ -83,6 +83,55 @@
       "image": "https://picsum.photos/411/220",
       "downloadUrl": "https://nodejs.org/zh-cn/",
       "category": "开发工具"
+    },
+    {
+      "name": "Notepad++",
+      "desc": "开源文本编辑器，支持多语言语法高亮与插件扩展",
+      "image": "https://picsum.photos/412/220",
+      "downloadUrl": "https://notepad-plus-plus.org/downloads/",
+      "category": "开发工具"
+    },
+    {
+      "name": "Git 版本控制",
+      "desc": "分布式版本控制系统，开发协作与代码管理必备",
+      "image": "https://picsum.photos/413/220",
+      "downloadUrl": "https://sourceforge.net/projects/git-for-windows.mirror/files/latest/download",
+      "category": "开发工具"
+    },
+    {
+      "name": "WinRAR 压缩",
+      "desc": "经典压缩工具，支持RAR/ZIP/7Z等格式，简单易用",
+      "image": "https://picsum.photos/414/220",
+      "downloadUrl": "https://www.win-rar.com/predownload.html?&L=0",
+      "category": "工具软件"
+    },
+    {
+      "name": "Bandizip",
+      "desc": "轻量快速压缩解压软件，支持多格式与分卷压缩",
+      "image": "https://picsum.photos/415/220",
+      "downloadUrl": "https://www.bandisoft.com/bandizip/",
+      "category": "工具软件"
+    },
+    {
+      "name": "VLC 播放器",
+      "desc": "开源多媒体播放器，支持几乎所有音视频格式",
+      "image": "https://picsum.photos/416/220",
+      "downloadUrl": "https://download.videolan.org/pub/videolan/vlc/last/win64/vlc-3.0.21-win64.exe",
+      "category": "影音播放"
+    },
+    {
+      "name": "Firefox 火狐浏览器",
+      "desc": "注重隐私与自由的浏览器，插件生态丰富",
+      "image": "https://picsum.photos/417/220",
+      "downloadUrl": "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=zh-CN",
+      "category": "浏览器"
+    },
+    {
+      "name": "OBS Studio",
+      "desc": "开源录屏与直播工具，支持多来源与场景切换",
+      "image": "https://picsum.photos/418/220",
+      "downloadUrl": "https://obsproject.com/download",
+      "category": "工具软件"
     }
   ]
 }
