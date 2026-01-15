@@ -39,7 +39,10 @@ if (typeof window !== 'undefined') {
   });
 }
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron')
+const fs = require('fs')
+const path = require('path')
+
 contextBridge.exposeInMainWorld('electronAPI', {
   closeApp: () => ipcRenderer.invoke('close-app'),
   minimizeApp: () => ipcRenderer.invoke('minimize-app'),
@@ -49,7 +52,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getInstalledSoftware: () => ipcRenderer.invoke('get-installed-software'),
   installApp: (appName) => ipcRenderer.invoke('install-app', appName),
   uninstallApp: (appName, uninstallCmd) => ipcRenderer.invoke('uninstall-app', appName, uninstallCmd),
-  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url)
+  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
+  getLocalAppList: () => {
+    try {
+      const filePath = path.join(__dirname, 'app-list.json');
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  },
+  
+  // 下载管理相关API
+  downloadFile: (url, filePath) => ipcRenderer.invoke('download-file', url, filePath),
+  cancelDownload: (taskId) => ipcRenderer.invoke('cancel-download', taskId),
+  pauseDownload: (taskId) => ipcRenderer.invoke('pause-download', taskId),
+  resumeDownload: (taskId) => ipcRenderer.invoke('resume-download', taskId),
+  
+  // 获取下载状态
+  getDownloadStatus: (taskId) => ipcRenderer.invoke('get-download-status', taskId),
+  
+  // 事件监听
+  onDownloadUpdate: (callback) => ipcRenderer.on('download-update', callback),
+  onDownloadComplete: (callback) => ipcRenderer.on('download-complete', callback),
+  onDownloadError: (callback) => ipcRenderer.on('download-error', callback)
 });
 
 // 添加卸载进度监听器

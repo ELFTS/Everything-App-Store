@@ -128,26 +128,41 @@ window.onload = () => {
     })
   })
 
-  // ============ 核心1：从GitHub Pages加载应用列表（修改，存储所有应用） ============
   async function loadAppListFromGitHub() {
-    // 替换为你的GitHub Pages地址！！！
-    const appListUrl = 'https://elfts.github.io/Everything-App-Store/app-list.json';
     homeAppContainer.innerHTML = '<div class="loading-text col-span-full">正在加载应用列表...</div>';
-
+    let localData = null;
+    if (window.electronAPI?.getLocalAppList) {
+      try {
+        localData = window.electronAPI.getLocalAppList();
+      } catch (e) {
+        localData = null;
+      }
+    }
+    if (localData && Array.isArray(localData.apps) && localData.apps.length > 0) {
+      allApps = localData.apps;
+      renderFilteredAppList(currentCategory);
+      bindCategoryEvent();
+      return;
+    }
+    const appListUrl = 'https://elfts.github.io/Everything-App-Store/app-list.json';
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     try {
       const response = await fetch(appListUrl, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (!response.ok) throw new Error(`请求失败：${response.status}`);
       const data = await response.json();
-      allApps = data.apps; // 把所有应用存入全局变量
-      renderFilteredAppList(currentCategory); // 默认渲染「全部应用」
-      bindCategoryEvent(); // 绑定分类点击事件
+      allApps = data.apps || [];
+      renderFilteredAppList(currentCategory);
+      bindCategoryEvent();
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('加载失败：', error);
+      if (localData && Array.isArray(localData.apps)) {
+        allApps = localData.apps;
+        renderFilteredAppList(currentCategory);
+        bindCategoryEvent();
+        return;
+      }
       if (error.name === 'AbortError') {
         homeAppContainer.innerHTML = '<div class="empty-text col-span-full">请求超时，请检查网络</div>';
       } else {
@@ -184,15 +199,16 @@ window.onload = () => {
     });
     homeAppContainer.appendChild(fragment);
 
-    // 绑定下载按钮事件
     document.querySelectorAll('.download-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const url = btn.getAttribute('data-url');
-        // 优先使用preload暴露的API
-        if (window.electronAPI?.openExternal) {
-          window.electronAPI.openExternal(url);
+      btn.addEventListener('click', function() {
+        const downloadUrl = this.getAttribute('data-url');
+        const appName = this.closest('.app-card')?.querySelector('h3')?.textContent || '应用';
+        if (window.downloadModule?.startDownload) {
+          window.downloadModule.startDownload(downloadUrl, appName);
+        } else if (window.electronAPI?.openExternal) {
+          window.electronAPI.openExternal(downloadUrl);
         } else {
-          shell.openExternal(url);
+          shell.openExternal(downloadUrl);
         }
       });
     });
@@ -420,21 +436,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300));
   }
   
-  // 添加下载管理按钮点击事件
-  const downloadManagerBtn = document.getElementById('download-manager-btn');
-  if (downloadManagerBtn) {
-    downloadManagerBtn.addEventListener('click', function() {
-      // 移除其他菜单项的active类
-      document.querySelectorAll('.menu-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      
-      // 给自己添加active类
-      this.classList.add('active');
-      
-      // 这里可以添加显示下载管理页面的逻辑
-      alert('下载管理功能正在开发中...');
-    });
+  // 初始化下载管理功能，确保模块已加载
+  if (window.downloadModule) {
+    window.downloadModule.initDownloadManager();
+  } else {
+    // 如果模块还未加载，延迟重试
+    setTimeout(() => {
+      if (window.downloadModule) {
+        window.downloadModule.initDownloadManager();
+      }
+    }, 100);
   }
 });
 
@@ -450,3 +461,24 @@ function debounce(func, wait) {
     timeout = setTimeout(later, wait);
   };
 }
+
+// ============ 下载管理功能 ============
+// （此部分内容已移至 download-manager.js 模块中）
+
+// 启动下载（从应用卡片）
+// （此功能已移至 download-manager.js 模块中）
+
+// 格式化字节大小的辅助函数
+// （此功能已移至 download-manager.js 模块中）
+
+// 显示通知的辅助函数
+// （此功能已移至 download-manager.js 模块中）
+
+// 暂停下载
+// （此功能已移至 download-manager.js 模块中）
+
+// 恢复下载
+// （此功能已移至 download-manager.js 模块中）
+
+// 删除下载任务
+// （此功能已移至 download-manager.js 模块中）

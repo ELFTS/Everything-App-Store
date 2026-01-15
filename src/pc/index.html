@@ -20,7 +20,6 @@
       <div class="sidebar-menu-group">
         <div class="sidebar-menu-title">我的应用</div>
         <div class="sidebar-menu-item menu-item" data-page="installed-page">已安装软件</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">下载管理</div>
         <div class="sidebar-menu-item menu-item" data-page="home-page">收藏列表</div>
       </div>
       <div class="sidebar-menu-group">
@@ -36,9 +35,6 @@
         <div class="page-container">
           <!-- 首页 -->
           <div class="page-item show" id="home-page">
-            <div class="mb-7 text-center">
-              <p class="text-gray-500 text-base">Windows 纯净应用下载中心 · 完美兼容 Win7/10/11 · 无捆绑 | 无广告 | 无插件</p>
-            </div>
             <div class="flex justify-center flex-wrap gap-3 mb-8" id="category-nav">
               <span class="category-item active" data-category="全部">全部应用</span>
               <span class="category-item" data-category="办公软件">办公软件</span>
@@ -84,9 +80,11 @@
       <!-- 保留标题文字 + 新增搜索框容器 -->
       <div class="title-bar-left">
         <div class="text-xl font-bold text-gray-800">万物应用商店</div>
+      </div>
+      <div class="title-bar-center">
         <div class="title-bar-search">
           <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="🔍 搜索软件名称/分类..." class="search-input">
+            <input type="text" id="search-input" placeholder="搜索软件名称/分类..." class="search-input">
             <div class="search-icon">🔍</div>
           </div>
           <!-- 热门软件弹窗 -->
@@ -97,7 +95,11 @@
         </div>
       </div>
       <div class="title-bar-right">
-        <div class="title-bar-menu-item" id="download-manager-btn">下载管理</div>
+        <div class="title-bar-icon-btn" id="download-manager-btn" title="下载管理">
+          <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+          </svg>
+        </div>
         <div class="flex gap-1">
           <button id="min-btn" class="window-btn">
             <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
@@ -114,6 +116,38 @@
     </div>
   </div>
 
+  <!-- 浮动下载管理窗口 -->
+  <div class="floating-window" id="download-manager-window" style="display: none;">
+    <div class="floating-window-header">
+      <h3>下载管理</h3>
+      <div class="window-controls">
+        <span class="close-btn" id="close-download-manager">&times;</span>
+      </div>
+    </div>
+    <div class="floating-window-body">
+      <div class="download-manager-header">
+        <div class="download-stats">
+          <span id="active-downloads-count">0</span> 个活跃下载,
+          <span id="completed-downloads-count">0</span> 个已完成
+        </div>
+      </div>
+      
+      <div class="download-controls">
+        <button id="pause-all-downloads" class="control-btn">暂停全部</button>
+        <button id="resume-all-downloads" class="control-btn">恢复全部</button>
+        <button id="clear-completed" class="control-btn">清除已完成</button>
+      </div>
+      
+      <div id="downloads-list" class="downloads-list">
+        <div class="no-downloads">暂无下载任务</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩层 -->
+  <div class="overlay" id="overlay" style="display: none;"></div>
+
+  <script src="download-manager.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>
