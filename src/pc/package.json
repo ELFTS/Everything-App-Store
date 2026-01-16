@@ -1,20 +1,22 @@
 {
   "name": "everything-app-store",
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "dist/main.js",
   "author": "万物永存技术工作室",
   "description": "万物应用商店",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
+    "start": "npm run build:scss && npm run build:ts && electron .",
+    "build:ts": "tsc",
     "build:scss": "sass style.scss style.css",
     "watch:scss": "sass --watch style.scss:style.css",
     "lint:css": "stylelint style.scss",
     "build:css": "npm run build:scss && postcss style.css -o style.min.css",
-    "build:32": "electron-builder --win --ia32",
-    "build:64": "electron-builder --win --x64",
-    "build:linux": "electron-builder --linux deb rpm",
-    "build": "npm run build:32 && npm run build:64"
+    "build:32": "npm run build:ts && electron-builder --win --ia32",
+    "build:64": "npm run build:ts && electron-builder --win --x64",
+    "build:linux": "npm run build:ts && electron-builder --linux deb rpm",
+    "build": "npm run build:32 && npm run build:64",
+    "postinstall": "electron-rebuild"
   },
   "build": {
     "appId": "com.lanyun.everythingappstore",
@@ -48,16 +50,20 @@
     }
   },
   "devDependencies": {
+    "@types/node": "^25.0.9",
+    "cssnano": "^6.0.0",
     "electron": "22.3.27",
     "electron-builder": "23.6.0",
-    "cssnano": "^6.0.0",
+    "electron-rebuild": "^3.2.9",
     "postcss": "^8.4.0",
     "postcss-cli": "^10.1.0",
     "sass": "^1.69.0",
     "stylelint": "^15.10.0",
-    "stylelint-config-standard": "^34.0.0"
+    "stylelint-config-standard": "^34.0.0",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
+    "icon-extractor": "^1.0.3",
     "iconv-lite": "^0.6.3"
   }
 }

@@ -1,15 +1,16 @@
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const iconv = require('iconv-lite');
+import { IpcMainInvokeEvent } from 'electron';
+import { exec } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as iconv from 'iconv-lite';
 
 /**
  * 卸载软件的主要逻辑函数
- * @param {Object} event - IPC事件对象
+ * @param {IpcMainInvokeEvent} event - IPC事件对象
  * @param {string} uninstallCmd - 卸载命令
  * @param {string} softwareName - 软件名称
  */
-function handleUninstall(event, uninstallCmd, softwareName) {
+export function handleUninstall(event: IpcMainInvokeEvent, uninstallCmd: string, softwareName: string): void {
   if (process.platform !== 'win32') {
     event.sender.send('uninstall-result', {
       success: false,
@@ -78,7 +79,7 @@ function handleUninstall(event, uninstallCmd, softwareName) {
   }
 
   // 发送开始卸载的通知
-  event.sender.send('uninstall-progress', { status: 'starting', message: `正在准备卸载 ${softwareName || '软件'}...` });
+  event.sender.send('uninstall-progress', `正在准备卸载 ${softwareName || '软件'}...`);
 
   // 执行卸载命令并捕获子进程引用
   const childProcess = exec(fixedUninstallCmd, { 
@@ -104,7 +105,7 @@ function handleUninstall(event, uninstallCmd, softwareName) {
       }
       event.sender.send('uninstall-result', { 
         success: false, 
-        msg: finalMsg 
+        error: finalMsg 
       });
       return;
     }
@@ -115,10 +116,7 @@ function handleUninstall(event, uninstallCmd, softwareName) {
   // 监听子进程事件，跟踪其运行状态
   childProcess.on('spawn', () => {
     console.log(`卸载进程已启动: ${softwareName || '未知软件'}`);
-    event.sender.send('uninstall-progress', { 
-      status: 'running', 
-      message: `正在卸载 ${softwareName || '软件'}，卸载程序已启动...` 
-    });
+    event.sender.send('uninstall-progress', `正在卸载 ${softwareName || '软件'}，卸载程序已启动...`);
   });
 
   childProcess.on('close', (code) => {
@@ -130,14 +128,10 @@ function handleUninstall(event, uninstallCmd, softwareName) {
       // 执行检查，传递当前软件名称
       checkSoftwareExistence(softwareName).then((stillExists) => {
         if (code === 0 && !stillExists) {
-          event.sender.send('uninstall-progress', { 
-            status: 'completed', 
-            message: `${softwareName || '软件'}卸载完成！正在刷新列表...` 
-          });
+          event.sender.send('uninstall-progress', `${softwareName || '软件'}卸载完成！正在刷新列表...`);
           // 发送卸载成功的最终结果
           event.sender.send('uninstall-result', { 
-            success: true, 
-            msg: `${softwareName || '软件'}卸载成功！正在刷新列表...` 
+            success: true
           });
           // 卸载完成后，重新获取已安装软件列表
           setTimeout(() => {
@@ -146,13 +140,11 @@ function handleUninstall(event, uninstallCmd, softwareName) {
         } else {
           // 如果退出码不是0或者软件似乎仍在列表中，视为失败
           const additionalInfo = stillExists ? "（警告：软件仍存在于系统中）" : "";
-          event.sender.send('uninstall-progress', { 
-            status: 'error', 
-            message: `${softwareName || '软件'}卸载可能未完成，退出码: ${code} ${additionalInfo}` 
-          });
+          const error = `${softwareName || '软件'}卸载可能未完成，退出码: ${code} ${additionalInfo}`;
+          event.sender.send('uninstall-progress', error);
           event.sender.send('uninstall-result', { 
             success: false, 
-            msg: `${softwareName || '软件'}卸载可能未完全完成${additionalInfo}，退出码: ${code}` 
+            error
           });
         }
       });
@@ -164,15 +156,19 @@ function handleUninstall(event, uninstallCmd, softwareName) {
   });
 
   // 监听子进程输出，提供进度反馈
-  childProcess.stdout.on('data', (data) => {
-    const output = iconv.decode(data, 'gbk');
-    console.log(`卸载输出: ${output}`);
-  });
+  if (childProcess.stdout) {
+    childProcess.stdout.on('data', (data) => {
+      const output = iconv.decode(data, 'gbk');
+      console.log(`卸载输出: ${output}`);
+    });
+  }
 
-  childProcess.stderr.on('data', (data) => {
-    const output = iconv.decode(data, 'gbk');
-    console.error(`卸载错误: ${output}`);
-  });
+  if (childProcess.stderr) {
+    childProcess.stderr.on('data', (data) => {
+      const output = iconv.decode(data, 'gbk');
+      console.error(`卸载错误: ${output}`);
+    });
+  }
 }
 
 /**
@@ -180,57 +176,47 @@ function handleUninstall(event, uninstallCmd, softwareName) {
  * @param {string} currentSoftwareName - 要检查的软件名称
  * @returns {Promise<boolean>} 返回一个Promise，解析为布尔值，表示软件是否仍然存在
  */
-function checkSoftwareExistence(currentSoftwareName) {
-  return new Promise((resolve) => {
-    const regPaths = [
-      'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
-      'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
-      'HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
-    ];
+async function checkSoftwareExistence(currentSoftwareName: string): Promise<boolean> {
+  const regPaths = [
+    'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+    'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
+    'HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall'
+  ];
 
-    let softwareStillExists = false;
-    
-    const checkRegPath = (regPath) => {
-      return new Promise((regResolve) => {
-        exec(`reg query "${regPath}" /s`, { encoding: 'buffer' }, (err, stdout) => {
-          if (!err) {
-            const output = iconv.decode(stdout, 'gbk');
-            const regItems = output.split('HKEY_');
-            regItems.forEach(item => {
-              if (item) {
-                const fullItem = 'HKEY_' + item;
-                const nameMatch = fullItem.match(/DisplayName\s+REG_SZ\s+([^\r\n]+)/);
-                
-                if (nameMatch && nameMatch[1] && !nameMatch[1].includes('更新') && !nameMatch[1].includes('补丁')) {
-                  const installedSoftwareName = nameMatch[1].trim();
-                  
-                  // 检查软件名称是否匹配
-                  if (installedSoftwareName.toLowerCase().includes(currentSoftwareName.toLowerCase())) {
-                    softwareStillExists = true;
-                  }
-                }
+  const checkRegPath = (regPath: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      exec(`reg query "${regPath}" /s`, { encoding: 'buffer' }, (err, stdout) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+        const output = iconv.decode(stdout, 'gbk');
+        const regItems = output.split('HKEY_');
+        for (const item of regItems) {
+          if (item) {
+            const fullItem = 'HKEY_' + item;
+            const nameMatch = fullItem.match(/DisplayName\s+REG_SZ\s+([^\r\n]+)/);
+            if (nameMatch && nameMatch[1] && !nameMatch[1].includes('更新') && !nameMatch[1].includes('补丁')) {
+              const installedSoftwareName = nameMatch[1].trim();
+              if (installedSoftwareName.toLowerCase().includes(currentSoftwareName.toLowerCase())) {
+                resolve(true);
+                return;
               }
-            });
+            }
           }
-          regResolve();
-        });
+        }
+        resolve(false);
       });
-    };
+    });
+  };
 
-    // 依次检查每个注册表路径
-    const checkNextPath = async (index = 0) => {
-      if (index < regPaths.length) {
-        await checkRegPath(regPaths[index]);
-        await checkNextPath(index + 1);
-      } else {
-        resolve(softwareStillExists);
-      }
-    };
+  for (const regPath of regPaths) {
+    if (await checkRegPath(regPath)) {
+      return true;
+    }
+  }
 
-    checkNextPath();
-  });
+  return false;
 }
 
-module.exports = {
-  handleUninstall
-};
+
