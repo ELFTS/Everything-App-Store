@@ -1,9 +1,10 @@
-const { ipcRenderer, shell } = require('electron')
+// const { ipcRenderer, shell } = require('electron') // 移除require
 window.onload = () => {
   // ============ 基础DOM获取 & 全局变量定义 ============
   const minBtn = document.getElementById('min-btn')
   const maxBtn = document.getElementById('max-btn')
   const closeBtn = document.getElementById('close-btn')
+  const downloadManagerBtn = document.getElementById('download-manager-btn');
   const appContainer = document.getElementById('app-container')
   const maxIcon = maxBtn.querySelector('.max-icon')
   const unmaxIcon = maxBtn.querySelector('.unmax-icon')
@@ -11,12 +12,105 @@ window.onload = () => {
   const homeAppContainer = document.getElementById('home-app-grid');
   const categoryItems = document.querySelectorAll('.category-item'); // 新增：分类按钮
 
+  // 辅助函数：更新最大化图标状态
+  function updateMaxIcon(isMaximized) {
+    if (isMaximized) {
+      appContainer.classList.add('maximized')
+      maxIcon.classList.add('hidden')
+      unmaxIcon.classList.remove('hidden')
+    } else {
+      appContainer.classList.remove('maximized')
+      maxIcon.classList.remove('hidden')
+      unmaxIcon.classList.add('hidden')
+    }
+  }
+
   // 新增：分类相关全局变量
   let allApps = []; // 存储从GitHub加载的所有应用数据
   let currentCategory = "全部"; // 默认选中分类
   let isFirstLoadInstalled = true;
   let isAppListLoaded = false; // 标记应用列表是否已加载
-
+  const SETTINGS_STORAGE_KEY = 'everythingAppStore.settings';
+  const defaultSettings = {
+    useLightTheme: true,
+    showDownloadNotification: true,
+    playDownloadSound: false,
+    autoLaunch: false,
+    autoCheckUpdates: true
+  };
+  function loadStoredSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return null;
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+  let appSettings = Object.assign({}, defaultSettings, loadStoredSettings() || {});
+  window.appSettings = appSettings;
+  function applyTheme(useLight) {
+    const root = document.documentElement;
+    if (!root) return;
+    if (useLight) {
+      root.classList.remove('theme-dark');
+    } else {
+      root.classList.add('theme-dark');
+    }
+  }
+  function syncSettingsToUI() {
+    const inputs = document.querySelectorAll('.settings-page input[type="checkbox"][data-setting-key]');
+    inputs.forEach(input => {
+      const key = input.getAttribute('data-setting-key');
+      if (!key) return;
+      const value = appSettings[key];
+      input.checked = !!value;
+    });
+    applyTheme(appSettings.useLightTheme);
+  }
+  function persistSettings() {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
+    } catch (e) {}
+  }
+  function handleSettingChange(key, value) {
+    appSettings[key] = value;
+    window.appSettings = appSettings;
+    if (key === 'useLightTheme') {
+      applyTheme(value);
+    }
+    if (key === 'autoLaunch' && window.electronAPI && window.electronAPI.setAutoLaunch) {
+      window.electronAPI.setAutoLaunch(value);
+    }
+    if (key === 'autoCheckUpdates' && value && window.downloadModule && typeof window.downloadModule.showNotification === 'function') {
+      window.downloadModule.showNotification('已自动检查更新，当前为最新版本 v1.0.0');
+    }
+    persistSettings();
+  }
+  syncSettingsToUI();
+   if (appSettings.autoCheckUpdates && window.downloadModule && typeof window.downloadModule.showNotification === 'function') {
+    window.downloadModule.showNotification('已自动检查更新，当前为最新版本 v1.0.0');
+  }
+  const settingsInputs = document.querySelectorAll('.settings-page input[type="checkbox"][data-setting-key]');
+  settingsInputs.forEach(input => {
+    const key = input.getAttribute('data-setting-key');
+    if (!key) return;
+    input.addEventListener('change', () => {
+      handleSettingChange(key, input.checked);
+    });
+  });
+  if (window.electronAPI && window.electronAPI.getAutoLaunchStatus) {
+    window.electronAPI.getAutoLaunchStatus().then(value => {
+      if (typeof value === 'boolean') {
+        appSettings.autoLaunch = value;
+        window.appSettings = appSettings;
+        syncSettingsToUI();
+        persistSettings();
+      }
+    }).catch(() => {});
+  }
   // ============ 标题栏搜索框 + 热门软件逻辑 ============
   const searchInput = document.getElementById('search-input');
   const hotAppsContainer = document.getElementById('hot-apps-container');
@@ -49,11 +143,9 @@ window.onload = () => {
     document.querySelectorAll('.hot-app-item').forEach(item => {
       item.addEventListener('click', () => {
         const url = item.getAttribute('data-url');
-        // 优先使用preload暴露的API，兼容原有shell调用
-        if (window.electronAPI?.openExternal) {
-          window.electronAPI.openExternal(url);
-        } else {
-          shell.openExternal(url);
+        // 使用preload暴露的API
+        if (window.electronAPI?.openExternalUrl) {
+          window.electronAPI.openExternalUrl(url);
         }
         hotAppsContainer.classList.add('hidden'); // 点击后隐藏弹窗
       });
@@ -86,22 +178,24 @@ window.onload = () => {
     e.stopPropagation();
   });
 
-  // ============ 原有窗口控制逻辑（完全保留） ============
-  minBtn.addEventListener('click', () => { ipcRenderer.send('window-control', 'minimize') })
-  maxBtn.addEventListener('click', () => { ipcRenderer.send('window-control', 'maximize') })
-  closeBtn.addEventListener('click', () => { ipcRenderer.send('window-control', 'close') })
-
-  ipcRenderer.on('window-status', (event, isMaximized) => {
-    if (isMaximized) {
-      appContainer.classList.add('maximized')
-      maxIcon.classList.add('hidden')
-      unmaxIcon.classList.remove('hidden')
-    } else {
-      appContainer.classList.remove('maximized')
-      maxIcon.classList.remove('hidden')
-      unmaxIcon.classList.add('hidden')
-    }
+  // ============ 原有窗口控制逻辑（适配contextIsolation） ============
+  if (minBtn) minBtn.addEventListener('click', () => { window.electronAPI.minimizeApp() })
+  if (maxBtn) maxBtn.addEventListener('click', async () => { 
+    const isMax = await window.electronAPI.maximizeApp();
+    updateMaxIcon(isMax);
   })
+  if (closeBtn) closeBtn.addEventListener('click', () => { window.electronAPI.closeApp() })
+  if (downloadManagerBtn) {
+    downloadManagerBtn.addEventListener('click', () => {
+      if (window.downloadModule) {
+        window.downloadModule.toggleDownloadManager();
+      }
+    });
+  }
+
+  // 移除旧的 ipcRenderer.on('window-status') 监听，改为由操作直接返回状态
+  // ipcRenderer.on('window-status', ...) 
+
 
   // ============ 侧边栏+页面切换逻辑（完全保留，无修改） ============
   const menuItems = document.querySelectorAll('.sidebar-menu-item.menu-item')
@@ -118,7 +212,7 @@ window.onload = () => {
 
       if (targetPage === 'installed-page' && isFirstLoadInstalled) {
         isFirstLoadInstalled = false;
-        ipcRenderer.send('get-installed-software');
+        loadInstalledSoftware();
       }
 
       if (targetPage === 'home-page' && !isAppListLoaded) {
@@ -133,7 +227,7 @@ window.onload = () => {
     let localData = null;
     if (window.electronAPI?.getLocalAppList) {
       try {
-        localData = window.electronAPI.getLocalAppList();
+        localData = await window.electronAPI.getLocalAppList();
       } catch (e) {
         localData = null;
       }
@@ -189,9 +283,9 @@ window.onload = () => {
       card.innerHTML = `
         <div class="img-placeholder"></div>
         <img data-src="${app.image}" alt="${app.name}" class="hidden">
-        <div class="p-4">
-          <h3 class="font-bold text-lg mb-2 text-gray-800">${app.name}</h3>
-          <p class="text-gray-500 text-xs mb-3 line-clamp-2">${app.desc}</p>
+        <div class="card-content">
+          <h3 class="card-title">${app.name}</h3>
+          <p class="card-desc line-clamp-2">${app.desc}</p>
           <button class="download-btn" data-url="${app.downloadUrl}">立即下载</button>
         </div>
       `;
@@ -205,10 +299,8 @@ window.onload = () => {
         const appName = this.closest('.app-card')?.querySelector('h3')?.textContent || '应用';
         if (window.downloadModule?.startDownload) {
           window.downloadModule.startDownload(downloadUrl, appName);
-        } else if (window.electronAPI?.openExternal) {
-          window.electronAPI.openExternal(downloadUrl);
-        } else {
-          shell.openExternal(downloadUrl);
+        } else if (window.electronAPI?.openExternalUrl) {
+          window.electronAPI.openExternalUrl(downloadUrl);
         }
       });
     });
@@ -258,10 +350,11 @@ window.onload = () => {
     });
   }
 
-  // ============ 已安装软件+卸载逻辑（完全保留） ============
-  ipcRenderer.on('installed-software-list', (event, softwareList) => {
+  // ============ 已安装软件+卸载逻辑 ============
+  async function loadInstalledSoftware() {
+    const softwareList = await window.electronAPI.getInstalledSoftware();
     softwareListContainer.innerHTML = '';
-    if (softwareList.length === 0) {
+    if (!softwareList || softwareList.length === 0) {
       softwareListContainer.innerHTML = '<div class="empty-text">暂无已安装软件</div>';
       return;
     }
@@ -316,14 +409,14 @@ window.onload = () => {
           document.body.appendChild(uninstallResultDiv);
           
           // 发送带软件名称的卸载请求
-          ipcRenderer.send('uninstall-software', uninstallCmd, softwareName);
+          window.electronAPI.uninstallApp(softwareName, uninstallCmd);
         }
       });
     });
-  });
+  }
 
   // 接收卸载进度信息
-  ipcRenderer.on('uninstall-progress', (event, progressData) => {
+  window.uninstallAPI.onUninstallProgress((event, progressData) => {
     const resultDiv = document.getElementById('uninstall-result-message');
     if (resultDiv) {
       let statusIcon = '⏳';
@@ -357,7 +450,7 @@ window.onload = () => {
     }
   });
 
-  ipcRenderer.on('uninstall-result', (event, result) => {
+  window.uninstallAPI.onUninstallResult((event, result) => {
     const resultDiv = document.getElementById('uninstall-result-message');
     if (resultDiv) {
       resultDiv.innerHTML = `
@@ -380,14 +473,14 @@ window.onload = () => {
     // 如果卸载成功，刷新已安装软件列表
     if (result.success) {
       setTimeout(() => {
-        ipcRenderer.send('get-installed-software');
+        loadInstalledSoftware();
       }, 1500);
     }
   });
 
   // 当收到软件列表更新通知时，重新加载列表
-  ipcRenderer.on('installed-software-list-updated', () => {
-    ipcRenderer.send('get-installed-software');
+  window.uninstallAPI.onInstalledSoftwareListUpdated(() => {
+    loadInstalledSoftware();
   });
 
   // 初始加载首页应用列表

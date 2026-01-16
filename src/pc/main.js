@@ -32,9 +32,9 @@ const createWindow = () => {
     backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
       webSecurity: false, // 开发阶段允许跨域（生产环境可关闭）
     }
   })
@@ -47,30 +47,36 @@ const createWindow = () => {
 }
 
 // 窗口控制 - 最小化/最大化/关闭
-ipcMain.on('window-control', (event, action) => {
-  switch (action) {
-    case 'minimize':
-      mainWindow.minimize()
-      break
-    case 'maximize':
-      if (!isWindowMaximized) {
-        originalWinInfo = mainWindow.getBounds()
-        mainWindow.maximize()
-        isWindowMaximized = true
-      } else {
-        mainWindow.setBounds(originalWinInfo)
-        isWindowMaximized = false
-      }
-      event.sender.send('window-status', isWindowMaximized)
-      break
-    case 'close':
-      mainWindow.close()
-      break
-  }
-})
+ipcMain.handle('minimize-app', () => {
+  mainWindow.minimize();
+});
 
-// 注册表读取异步化 + 分批处理（兼容unins000.exe识别）
-ipcMain.on('get-installed-software', async (event) => {
+ipcMain.handle('maximize-app', () => {
+  if (!isWindowMaximized) {
+    originalWinInfo = mainWindow.getBounds();
+    mainWindow.maximize();
+    isWindowMaximized = true;
+  } else {
+    mainWindow.setBounds(originalWinInfo);
+    isWindowMaximized = false;
+  }
+  return isWindowMaximized;
+});
+
+ipcMain.handle('unmaximize-app', () => {
+  mainWindow.unmaximize();
+  isWindowMaximized = false;
+  return isWindowMaximized;
+});
+
+ipcMain.handle('close-app', () => {
+  mainWindow.close();
+});
+
+ipcMain.handle('get-installed-software', async () => {
+  if (process.platform !== 'win32') {
+    return [];
+  }
   const softwareList = [];
   const regPaths = [
     'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
@@ -123,11 +129,25 @@ ipcMain.on('get-installed-software', async (event) => {
   for (const regPath of regPaths) await readRegPath(regPath);
   
   softwareList.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-  event.sender.send('installed-software-list', softwareList);
+  return softwareList;
+});
+
+ipcMain.handle('get-local-app-list', () => {
+  try {
+    const filePath = path.join(__dirname, 'app-list.json');
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(raw);
+    }
+    return { apps: [] };
+  } catch (e) {
+    console.error('Failed to read app-list.json:', e);
+    return { apps: [] };
+  }
 });
 
 // 卸载逻辑（兼容unins000.exe、uninst.exe等常见卸载程序）
-ipcMain.on('uninstall-software', (event, uninstallCmd, softwareName) => {
+ipcMain.handle('uninstall-app', (event, softwareName, uninstallCmd) => {
   handleUninstall(event, uninstallCmd, softwareName);
 });
 
@@ -333,6 +353,24 @@ ipcMain.handle('resume-download', (event, taskId) => {
 ipcMain.handle('get-download-status', (event, taskId) => {
   const task = downloadTasks.get(taskId);
   return task ? task : null;
+});
+
+ipcMain.handle('get-auto-launch-status', () => {
+  try {
+    const settings = app.getLoginItemSettings();
+    return !!settings.openAtLogin;
+  } catch (e) {
+    return false;
+  }
+});
+
+ipcMain.handle('set-auto-launch', (event, enabled) => {
+  try {
+    app.setLoginItemSettings({ openAtLogin: !!enabled });
+    return true;
+  } catch (e) {
+    return false;
+  }
 });
 
 app.whenReady().then(() => {

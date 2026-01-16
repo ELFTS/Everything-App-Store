@@ -10,6 +10,13 @@ const iconv = require('iconv-lite');
  * @param {string} softwareName - 软件名称
  */
 function handleUninstall(event, uninstallCmd, softwareName) {
+  if (process.platform !== 'win32') {
+    event.sender.send('uninstall-result', {
+      success: false,
+      msg: '当前卸载功能仅在 Windows 系统下可用'
+    });
+    return;
+  }
   // 空命令校验
   if (!uninstallCmd || uninstallCmd.trim() === '') {
     event.sender.send('uninstall-result', { 

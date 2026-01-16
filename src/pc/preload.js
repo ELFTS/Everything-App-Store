@@ -40,8 +40,6 @@ if (typeof window !== 'undefined') {
 }
 
 const { contextBridge, ipcRenderer } = require('electron')
-const fs = require('fs')
-const path = require('path')
 
 contextBridge.exposeInMainWorld('electronAPI', {
   closeApp: () => ipcRenderer.invoke('close-app'),
@@ -53,15 +51,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installApp: (appName) => ipcRenderer.invoke('install-app', appName),
   uninstallApp: (appName, uninstallCmd) => ipcRenderer.invoke('uninstall-app', appName, uninstallCmd),
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
-  getLocalAppList: () => {
-    try {
-      const filePath = path.join(__dirname, 'app-list.json');
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-  },
+  getLocalAppList: () => ipcRenderer.invoke('get-local-app-list'),
   
   // 下载管理相关API
   downloadFile: (url, filePath) => ipcRenderer.invoke('download-file', url, filePath),
@@ -75,7 +65,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 事件监听
   onDownloadUpdate: (callback) => ipcRenderer.on('download-update', callback),
   onDownloadComplete: (callback) => ipcRenderer.on('download-complete', callback),
-  onDownloadError: (callback) => ipcRenderer.on('download-error', callback)
+  onDownloadError: (callback) => ipcRenderer.on('download-error', callback),
+  getAutoLaunchStatus: () => ipcRenderer.invoke('get-auto-launch-status'),
+  setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled)
 });
 
 // 添加卸载进度监听器

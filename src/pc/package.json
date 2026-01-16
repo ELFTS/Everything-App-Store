@@ -7,8 +7,13 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
+    "build:scss": "sass style.scss style.css",
+    "watch:scss": "sass --watch style.scss:style.css",
+    "lint:css": "stylelint style.scss",
+    "build:css": "npm run build:scss && postcss style.css -o style.min.css",
     "build:32": "electron-builder --win --ia32",
     "build:64": "electron-builder --win --x64",
+    "build:linux": "electron-builder --linux deb rpm",
     "build": "npm run build:32 && npm run build:64"
   },
   "build": {
@@ -16,6 +21,13 @@
     "productName": "万物应用商店",
     "directories": {
       "output": "release"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "rpm"
+      ],
+      "category": "Utility"
     },
     "win": {
       "target": "nsis",
@@ -37,7 +49,13 @@
   },
   "devDependencies": {
     "electron": "22.3.27",
-    "electron-builder": "23.6.0"
+    "electron-builder": "23.6.0",
+    "cssnano": "^6.0.0",
+    "postcss": "^8.4.0",
+    "postcss-cli": "^10.1.0",
+    "sass": "^1.69.0",
+    "stylelint": "^15.10.0",
+    "stylelint-config-standard": "^34.0.0"
   },
   "dependencies": {
     "iconv-lite": "^0.6.3"

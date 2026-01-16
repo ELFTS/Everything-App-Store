@@ -8,109 +8,178 @@
 </head>
 <body>
   <div class="app-container" id="app-container">
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-      <div class="sidebar-menu-group">
-        <div class="sidebar-menu-title">应用商店</div>
-        <div class="sidebar-menu-item menu-item active" data-page="home-page">首页推荐</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">软件分类</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">最新上线</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">热门排行</div>
-      </div>
-      <div class="sidebar-menu-group">
-        <div class="sidebar-menu-title">我的应用</div>
-        <div class="sidebar-menu-item menu-item" data-page="installed-page">已安装软件</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">收藏列表</div>
-      </div>
-      <div class="sidebar-menu-group">
-        <div class="sidebar-menu-title">系统设置</div>
-        <div class="sidebar-menu-item menu-item" data-page="home-page">通用设置</div>
-        <div class="sidebar-menu-item menu-item" data-page="about-page">关于我们</div>
-      </div>
-    </div>
-
-    <!-- 主内容区 -->
-    <div class="main-content">
-      <div class="content-wrap">
-        <div class="page-container">
-          <!-- 首页 -->
-          <div class="page-item show" id="home-page">
-            <div class="flex justify-center flex-wrap gap-3 mb-8" id="category-nav">
-              <span class="category-item active" data-category="全部">全部应用</span>
-              <span class="category-item" data-category="办公软件">办公软件</span>
-              <span class="category-item" data-category="影音播放">影音播放</span>
-              <span class="category-item" data-category="工具软件">工具软件</span>
-              <span class="category-item" data-category="浏览器">浏览器</span>
-              <span class="category-item" data-category="开发工具">开发工具</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="home-app-grid"></div>
-          </div>
-
-          <!-- 已安装软件页面 -->
-          <div class="page-item" id="installed-page">
-            <div class="installed-title">✅ 本机已安装软件列表 (真实读取)</div>
-            <div id="software-list-container" class="software-list">
-              <div class="loading-text">正在扫描本机已安装软件，请稍候...</div>
-            </div>
-          </div>
-
-          <!-- 关于页面【核心修改：文字图标 → PNG图片】 -->
-          <div class="page-item" id="about-page">
-            <div class="about-page">
-              <!-- 原来的文字：<div class="about-logo">📦</div> -->
-              <img src="./images/about-logo.png" class="about-logo" alt="万物应用商店logo">
-              <div class="about-title">万物应用商店</div>
-              <div class="about-version">版本号 v1.0.0 正式版</div>
-              <div class="about-desc">
-                一款纯净、安全、无广告的Windows应用下载工具，<br/>
-                精选海量优质软件，一键下载安装，拒绝捆绑和流氓软件。<br/><br/>
-                我们致力于为用户提供极致的下载体验，所有软件均经过安全检测，<br/>
-                保证绿色无毒，放心使用！<br/><br/>
-                不忘初心，方得始终，感谢您的支持与信任！
-              </div>
-              <div class="about-copyright">© 2026 万物应用商店 版权所有 | 保留所有权利</div>
-            </div>
-          </div>
+    <!-- 标题栏 -->
+    <div class="title-bar">
+      <!-- 左侧：Logo和标题 -->
+      <div class="title-bar-left">
+        <div class="title-bar-logo-wrap">
+          <img src="./images/icon.png" alt="logo" class="title-bar-logo">
+          <span class="title-bar-title">万物应用商店</span>
         </div>
       </div>
-    </div>
-
-    <!-- 标题栏（新增搜索框） -->
-    <div class="title-bar">
-      <!-- 保留标题文字 + 新增搜索框容器 -->
-      <div class="title-bar-left">
-        <div class="text-xl font-bold text-gray-800">万物应用商店</div>
-      </div>
+      <!-- 中间：搜索框 -->
       <div class="title-bar-center">
         <div class="title-bar-search">
           <div class="search-wrapper">
-            <input type="text" id="search-input" placeholder="搜索软件名称/分类..." class="search-input">
-            <div class="search-icon">🔍</div>
+            <input type="text" class="search-input" id="search-input" placeholder="搜索应用、游戏和工具...">
+            <div class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
           </div>
           <!-- 热门软件弹窗 -->
-          <div id="hot-apps-container" class="hot-apps-container hidden">
-            <div class="hot-apps-title">🔥 热门软件</div>
-            <div class="hot-apps-list" id="hot-apps-list"></div>
+          <div class="hot-apps-container hidden" id="hot-apps-container">
+            <div class="hot-apps-title">热门搜索</div>
+            <div id="hot-apps-list"></div>
           </div>
         </div>
       </div>
+      <!-- 右侧：窗口控制按钮 -->
       <div class="title-bar-right">
-        <div class="title-bar-icon-btn" id="download-manager-btn" title="下载管理">
-          <svg class="icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
-          </svg>
+        <div class="window-controls">
+          <div class="icon-btn" id="download-manager-btn" title="下载管理">
+            <div class="download-progress-ring">
+              <svg class="progress-ring-circle" width="24" height="24">
+                <circle class="progress-ring-circle-bg" stroke-width="2" fill="transparent" r="10" cx="12" cy="12"/>
+                <circle class="progress-ring-circle-progress" stroke-width="2" fill="transparent" r="10" cx="12" cy="12"/>
+              </svg>
+            </div>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </div>
+
+          <div class="window-control-btn" id="min-btn" title="最小化">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </div>
+          <div class="window-control-btn" id="max-btn" title="最大化">
+            <svg class="icon max-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            <svg class="icon unmax-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
+          </div>
+          <div class="window-control-btn close-btn" id="close-btn" title="关闭">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </div>
         </div>
-        <div class="flex gap-1">
-          <button id="min-btn" class="window-btn">
-            <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
-          </button>
-          <button id="max-btn" class="window-btn">
-            <svg class="max-icon" viewBox="0 0 16 16"><path d="M3 3h10v10H3z"/></svg>
-            <svg class="unmax-icon hidden" viewBox="0 0 16 16"><path d="M4 4h6v6H4zM8 8h6v6H8z"/></svg>
-          </button>
-          <button id="close-btn" class="window-btn close-btn">
-            <svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg>
-          </button>
+      </div>
+    </div>
+    <div class="app-body">
+      <!-- 侧边栏 -->
+      <div class="sidebar">
+        <div class="sidebar-menu-group">
+          <div class="sidebar-menu-title">应用商店</div>
+          <div class="sidebar-menu-item menu-item active" data-page="home-page">首页推荐</div>
+          <div class="sidebar-menu-item menu-item" data-page="home-page">软件分类</div>
+          <div class="sidebar-menu-item menu-item" data-page="home-page">最新上线</div>
+          <div class="sidebar-menu-item menu-item" data-page="home-page">热门排行</div>
+        </div>
+        <div class="sidebar-menu-group">
+          <div class="sidebar-menu-title">我的应用</div>
+          <div class="sidebar-menu-item menu-item" data-page="installed-page">已安装软件</div>
+          <div class="sidebar-menu-item menu-item" data-page="home-page">收藏列表</div>
+        </div>
+        <div class="sidebar-menu-group">
+          <div class="sidebar-menu-title">系统设置</div>
+          <div class="sidebar-menu-item menu-item" data-page="settings-page">通用设置</div>
+          <div class="sidebar-menu-item menu-item" data-page="about-page">关于我们</div>
+        </div>
+      </div>
+
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <div class="content-wrap">
+          <div class="page-container">
+            <!-- 首页 -->
+            <div class="page-item show" id="home-page">
+              <div class="flex justify-center flex-wrap gap-3 mb-8" id="category-nav">
+                <span class="category-item active" data-category="全部">全部应用</span>
+                <span class="category-item" data-category="办公软件">办公软件</span>
+                <span class="category-item" data-category="影音播放">影音播放</span>
+                <span class="category-item" data-category="工具软件">工具软件</span>
+                <span class="category-item" data-category="浏览器">浏览器</span>
+                <span class="category-item" data-category="开发工具">开发工具</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="home-app-grid"></div>
+            </div>
+
+            <!-- 已安装软件页面 -->
+            <div class="page-item" id="installed-page">
+              <div class="page-title">✅ 本机已安装软件列表 (真实读取)</div>
+              <div id="software-list-container" class="software-list">
+                <div class="loading-text">正在扫描本机已安装软件，请稍候...</div>
+              </div>
+            </div>
+
+            <!-- 关于页面 -->
+            <div class="page-item" id="about-page">
+              <div class="about-page">
+                <!-- 原来的文字：<div class="about-logo">📦</div> -->
+                <img src="./images/about-logo.png" class="about-logo" alt="万物应用商店logo">
+                <div class="about-title">万物应用商店</div>
+                <div class="about-version">版本号 v1.0.0 正式版</div>
+                <div class="about-desc">
+                  一款纯净、安全、无广告的Windows应用下载工具，<br/>
+                  精选海量优质软件，一键下载安装，拒绝捆绑和流氓软件。<br/><br/>
+                  我们致力于为用户提供极致的下载体验，所有软件均经过安全检测，<br/>
+                  保证绿色无毒，放心使用！<br/><br/>
+                  不忘初心，方得始终，感谢您的支持与信任！
+                </div>
+                <div class="about-copyright">© 2026 万物应用商店 版权所有 | 保留所有权利</div>
+              </div>
+            </div>
+
+            <div class="page-item" id="settings-page">
+              <div class="settings-page">
+                <div class="page-title">通用设置</div>
+                <div class="settings-subtitle">调整应用外观和基础行为</div>
+                <div class="settings-grid">
+                  <div class="settings-card">
+                    <div class="settings-card-title">外观主题</div>
+                    <div class="settings-card-desc">切换应用界面的亮暗样式</div>
+                    <div class="settings-row">
+                      <span>使用浅色主题</span>
+                      <label class="switch">
+                        <input type="checkbox" data-setting-key="useLightTheme" checked>
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-card-title">下载完成提示</div>
+                    <div class="settings-card-desc">控制下载结束时的通知行为</div>
+                    <div class="settings-row">
+                      <span>显示右上角弹出提示</span>
+                      <label class="switch">
+                        <input type="checkbox" data-setting-key="showDownloadNotification" checked>
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+                    <div class="settings-row">
+                      <span>播放提示音效</span>
+                      <label class="switch">
+                        <input type="checkbox" data-setting-key="playDownloadSound">
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="settings-card">
+                    <div class="settings-card-title">启动行为</div>
+                    <div class="settings-card-desc">配置应用启动相关选项</div>
+                    <div class="settings-row">
+                      <span>随系统启动</span>
+                      <label class="switch">
+                        <input type="checkbox" data-setting-key="autoLaunch">
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+                    <div class="settings-row">
+                      <span>启动时自动检查更新</span>
+                      <label class="switch">
+                        <input type="checkbox" data-setting-key="autoCheckUpdates" checked>
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

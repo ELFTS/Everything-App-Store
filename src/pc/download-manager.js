@@ -2,17 +2,7 @@ let downloads = [];
 
 function getDownloadApi() {
   if (window.electronAPI) return window.electronAPI;
-  try {
-    const { ipcRenderer } = require('electron');
-    return {
-      downloadFile: (url, fileName) => ipcRenderer.invoke('download-file', url, fileName),
-      cancelDownload: (taskId) => ipcRenderer.invoke('cancel-download', taskId),
-      pauseDownload: (taskId) => ipcRenderer.invoke('pause-download', taskId),
-      resumeDownload: (taskId) => ipcRenderer.invoke('resume-download', taskId),
-    };
-  } catch (e) {
-    return null;
-  }
+  return null;
 }
 
 // 初始化下载管理
@@ -20,48 +10,54 @@ function initDownloadManager() {
   const downloadManagerBtn = document.getElementById('download-manager-btn');
   const downloadManagerWindow = document.getElementById('download-manager-window');
   const closeDownloadManager = document.getElementById('close-download-manager');
+  const overlay = document.getElementById('overlay');
   
   ensureProgressRing();
-  
-  // 显示下载管理浮动窗口
-  if (downloadManagerBtn) {
-    downloadManagerBtn.addEventListener('click', function() {
-      downloadManagerWindow.style.display = 'block';
-      
-      // 添加遮罩层
-      let overlay = document.getElementById('overlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'overlay';
-        overlay.className = 'overlay';
-        document.body.appendChild(overlay);
-      }
+  function openDownloadManagerWindow() {
+    if (!downloadManagerWindow || !downloadManagerBtn) return;
+    downloadManagerWindow.style.display = 'flex';
+    requestAnimationFrame(() => {
+      downloadManagerWindow.classList.add('open');
+    });
+    if (overlay) {
       overlay.style.display = 'block';
-      
-      // 切换按钮状态
-      this.classList.toggle('active');
-    });
+    }
+    downloadManagerBtn.classList.add('active');
   }
-  
-  // 隐藏下载管理浮动窗口
-  if (closeDownloadManager) {
-    closeDownloadManager.addEventListener('click', function() {
+
+  function closeDownloadManagerWindow() {
+    if (!downloadManagerWindow || !downloadManagerBtn) return;
+    downloadManagerWindow.classList.remove('open');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+    downloadManagerBtn.classList.remove('active');
+    setTimeout(() => {
       downloadManagerWindow.style.display = 'none';
-      document.getElementById('overlay').style.display = 'none';
-      
-      // 移除按钮的激活状态
-      document.getElementById('download-manager-btn').classList.remove('active');
+    }, 200);
+  }
+
+  if (downloadManagerBtn && downloadManagerWindow) {
+    downloadManagerBtn.addEventListener('click', () => {
+      if (downloadManagerWindow.classList.contains('open')) {
+        closeDownloadManagerWindow();
+      } else {
+        openDownloadManagerWindow();
+      }
     });
   }
-  
-  // 点击遮罩层关闭窗口
-  document.getElementById('overlay')?.addEventListener('click', function() {
-    downloadManagerWindow.style.display = 'none';
-    this.style.display = 'none';
-    
-    // 移除按钮的激活状态
-    document.getElementById('download-manager-btn').classList.remove('active');
-  });
+
+  if (closeDownloadManager) {
+    closeDownloadManager.addEventListener('click', () => {
+      closeDownloadManagerWindow();
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      closeDownloadManagerWindow();
+    });
+  }
   
   // 绑定下载管理页面控件
   bindDownloadControls();
@@ -199,7 +195,10 @@ async function startDownload(downloadUrl, appName) {
     const downloadManagerWindow = document.getElementById('download-manager-window');
     const downloadManagerBtn = document.getElementById('download-manager-btn');
     if (downloadManagerWindow.style.display === 'none') {
-      downloadManagerWindow.style.display = 'block';
+      downloadManagerWindow.style.display = 'flex';
+      requestAnimationFrame(() => {
+        downloadManagerWindow.classList.add('open');
+      });
       
       // 添加遮罩层
       let overlay = document.getElementById('overlay');
@@ -339,15 +338,6 @@ function attachDownloadEventListeners() {
     eventsAttached = true;
     return;
   }
-  try {
-    const { ipcRenderer } = require('electron');
-    ipcRenderer.on('download-update', handleUpdate);
-    ipcRenderer.on('download-complete', handleComplete);
-    ipcRenderer.on('download-error', handleError);
-    eventsAttached = true;
-  } catch (e) {
-    // ignore
-  }
 }
 
 attachDownloadEventListeners();
@@ -431,7 +421,16 @@ function formatBytes(bytes, decimals = 2) {
 
 // 显示通知的辅助函数
 function showNotification(message) {
-  // 创建通知元素
+  const settings = window.appSettings || {};
+  if (settings.showDownloadNotification === false) {
+    return;
+  }
+  const existing = document.querySelectorAll('.notification');
+  existing.forEach(node => {
+    if (node.parentNode) {
+      node.parentNode.removeChild(node);
+    }
+  });
   const notification = document.createElement('div');
   notification.className = 'notification';
   notification.style.cssText = `
@@ -449,7 +448,9 @@ function showNotification(message) {
     animation: slideInRight 0.3s ease;
   `;
   notification.textContent = message;
-  
+  if (settings.playDownloadSound) {
+    playDownloadSound();
+  }
   document.body.appendChild(notification);
   
   // 3秒后自动移除通知
@@ -461,6 +462,26 @@ function showNotification(message) {
       }
     }, 300);
   }, 3000);
+}
+
+function playDownloadSound() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    const now = ctx.currentTime;
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+    oscillator.start(now);
+    oscillator.stop(now + 0.35);
+  } catch (e) {}
 }
 
 // 将下载管理功能挂载到window对象上
