@@ -1,13 +1,18 @@
 {
   "name": "everything-app-store",
   "version": "1.0.0",
-  "main": "dist/main.js",
+
+  "main": "dist/main/main.js",
   "author": "万物永存技术工作室",
   "description": "万物应用商店",
   "license": "MIT",
   "scripts": {
     "start": "npm run build:scss && npm run build:ts && electron .",
-    "build:ts": "tsc",
+    "build:ts": "npm run clean && npm run build:main && npm run build:renderer && npm run build:preload",
+    "build:preload": "tsc -p tsconfig.preload.json",
+    "clean": "if exist dist rmdir /s /q dist",
+    "build:main": "tsc -p tsconfig.main.json && move dist\\main\\main\\* dist\\main && rmdir dist\\main\\main",
+    "build:renderer": "esbuild src/renderer/index.ts --bundle --outfile=dist/renderer/bundle.js --format=iife",
     "build:scss": "sass style.scss style.css",
     "watch:scss": "sass --watch style.scss:style.css",
     "lint:css": "stylelint style.scss",
@@ -24,6 +29,13 @@
     "directories": {
       "output": "release"
     },
+    "files": [
+      "dist/**/*",
+      "index.html",
+      "style.css",
+      "app-list.json",
+      "images/**/*"
+    ],
     "linux": {
       "target": [
         "deb",
@@ -55,6 +67,7 @@
     "electron": "22.3.27",
     "electron-builder": "23.6.0",
     "electron-rebuild": "^3.2.9",
+    "esbuild": "^0.27.2",
     "postcss": "^8.4.0",
     "postcss-cli": "^10.1.0",
     "sass": "^1.69.0",

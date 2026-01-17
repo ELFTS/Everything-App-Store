@@ -414,6 +414,7 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
   svg {
     width: 16px;
     height: 16px;
+    stroke: currentColor;
   }
 
   &:hover {
@@ -483,25 +484,51 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
   border-radius: 50%;
   position: relative;
   
-  svg {
+  svg.icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 16px;
     height: 16px;
-    fill: currentColor;
+    transition: opacity 0.2s;
   }
 
-  &.has-progress .progress-ring-svg {
+  .download-progress-ring {
+    display: none; /* 默认隐藏 */
     position: absolute;
-    top: -2px; left: -2px;
-    width: 36px; height: 36px;
-    transform: rotate(-90deg);
+    top: -2px;
+    left: -2px;
+    width: 36px;
+    height: 36px;
     pointer-events: none;
   }
 
-  .progress-ring__track { stroke: var(--color-border-subtle); }
-  .progress-ring__indicator {
+  .progress-ring-circle {
+    transform-origin: center;
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle-bg {
+    stroke: var(--color-border-subtle);
+    stroke-width: 2;
+  }
+
+  .progress-ring-circle-progress {
     stroke: var(--color-primary);
-    transition: stroke-dashoffset 0.35s;
     stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s;
+    stroke-width: 2;
+  }
+
+  &.downloading {
+    .download-progress-ring {
+      display: block; /* 下载时显示 */
+    }
+    
+    svg.icon {
+      opacity: 0.5; /* 下载时图标变淡 */
+    }
   }
 }
 
@@ -804,65 +831,21 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
 .download-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px;
-  margin: 0;
-  gap: 12px;
-  justify-content: flex-start;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-subtle);
+  padding: 12px;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-  
-  &:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-border-hover);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-subtle);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  justify-content: space-between;
+
+  &.completed {
+    background: #e6f9f0;
+    border-color: var(--color-primary);
   }
-  
-  .app-icon {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    background: var(--color-bg-panel);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-  
-  .download-info { flex: 1; min-width: 0; }
-  
-  .download-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-main);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  
-  .download-status { font-size: 11px; color: var(--color-text-muted); margin: 2px 0; }
-  
-  .download-size {
-    font-size: 11px;
-    color: var(--color-text-light);
-    margin-top: 2px;
-  }
-  
-  .download-progress-container {
-    height: 4px;
-    background: var(--color-border-subtle);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  
-  .download-progress-bar {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 2px;
-    transition: width 0.2s ease;
-  }
-  
-  .download-actions { display: flex; gap: 4px; }
 }
 
-.download-action-btn {
+.download-controls .pause-resume-btn,
+.download-controls .cancel-btn {
   -webkit-app-region: no-drag;
   cursor: pointer;
   display: inline-flex;
@@ -870,13 +853,13 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
   justify-content: center;
   background: var(--btn-gradient-default);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   color: var(--color-text-main);
   transition: all 0.2s ease;
   box-shadow: var(--btn-shadow);
   user-select: none;
-  width: 24px; height: 24px;
-  padding: 0;
+  padding: 6px 12px;
+  font-size: 12px;
   
   &:hover {
     background: var(--btn-gradient-hover);
@@ -888,10 +871,59 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
     box-shadow: var(--btn-shadow-active);
     transform: translateY(1px);
   }
-  
-  svg { width: 14px; height: 14px; }
 }
 
+.download-controls .cancel-btn {
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fecaca;
+
+  &:hover {
+    background: #fecaca;
+  }
+}
+
+.download-action-btn {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  transition: all 0.2s ease;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  i {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  &:hover {
+    background: var(--color-bg-panel-alt);
+    color: var(--color-text-main);
+  }
+
+  &.cancel-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  &.open-btn:hover {
+    background: #e6f9f0;
+    color: var(--color-primary);
+  }
+}
+  
 /* 通知弹窗 */
 .notification {
   position: fixed;
@@ -1113,4 +1145,3 @@ input:focus + .switch-slider {
 input:checked + .switch-slider:before {
   transform: translateX(20px);
 }
-

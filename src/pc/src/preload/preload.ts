@@ -74,12 +74,13 @@ export interface IElectronAPI {
   getLocalAppList: () => Promise<{ apps: AppData[] }>;
   downloadFile: (url: string, filePath: string) => Promise<string>;
   cancelDownload: (taskId: string) => Promise<void>;
+  openDownload: (taskId: string) => Promise<void>;
   pauseDownload: (taskId: string) => Promise<void>;
   resumeDownload: (taskId: string) => Promise<void>;
+  retryDownload: (taskId: string) => Promise<void>;
   getDownloadStatus: (taskId: string) => Promise<DownloadTask | undefined>;
-  onDownloadUpdate: (callback: (event: IpcRendererEvent, ...args: any[]) => void) => void;
-  onDownloadComplete: (callback: (event: IpcRendererEvent, ...args: any[]) => void) => void;
-  onDownloadError: (callback: (event: IpcRendererEvent, ...args: any[]) => void) => void;
+  startDownload: (url: string, filename: string) => void;
+  on: (channel: string, listener: (...args: any[]) => void) => void;
   getAutoLaunchStatus: () => Promise<boolean>;
   setAutoLaunch: (enabled: boolean) => Promise<boolean>;
 }
@@ -94,7 +95,7 @@ export interface AppData {
 
 export interface DownloadTask {
   id: string;
-  url: string;
+  url:string;
   filePath: string;
   fileName: string;
   totalLength: number;
@@ -116,21 +117,25 @@ const electronAPI: IElectronAPI = {
   // 下载管理相关API
   downloadFile: (url, filePath) => ipcRenderer.invoke('download-file', url, filePath),
   cancelDownload: (taskId) => ipcRenderer.invoke('cancel-download', taskId),
+  openDownload: (taskId) => ipcRenderer.invoke('open-download', taskId),
   pauseDownload: (taskId) => ipcRenderer.invoke('pause-download', taskId),
   resumeDownload: (taskId) => ipcRenderer.invoke('resume-download', taskId),
+  retryDownload: (taskId) => ipcRenderer.invoke('retry-download', taskId),
   
   // 获取下载状态
   getDownloadStatus: (taskId) => ipcRenderer.invoke('get-download-status', taskId),
   
   // 事件监听
-  onDownloadUpdate: (callback) => ipcRenderer.on('download-update', callback),
-  onDownloadComplete: (callback) => ipcRenderer.on('download-complete', callback),
-  onDownloadError: (callback) => ipcRenderer.on('download-error', callback),
+  startDownload: (url, filename) => ipcRenderer.send('start-download', { url, filename }),
+  on: (channel, listener) => {
+    ipcRenderer.on(channel, (event, ...args) => listener(...args));
+  },
   getAutoLaunchStatus: () => ipcRenderer.invoke('get-auto-launch-status'),
   setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled)
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
 
 export interface IUninstallAPI {
     uninstall: (path: string) => Promise<{ success: boolean; error?: string }>;

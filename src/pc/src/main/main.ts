@@ -1,17 +1,15 @@
 
-import { app, BrowserWindow, ipcMain, dialog, net, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, session, shell } from 'electron';
 import * as path from 'path';
 import * as iconv from 'iconv-lite';
 import { exec } from 'child_process';
 import * as fs from 'fs';
-import * as os from 'os';
-import * as https from 'https';
-import * as http from 'http';
-import { URL } from 'url';
+import { DownloadManager } from './download-manager';
 import { handleUninstall } from './uninstall-handler';
-import * as extractor from 'icon-extractor';
+const extractor = require('icon-extractor');
 
 let mainWindow: BrowserWindow | null = null;
+let downloadManager: DownloadManager | null = null;
 let isWindowMaximized = false;
 const winSize = { width: 1200, height: 760 };
 let originalWinInfo = { x: 0, y: 0, width: winSize.width, height: winSize.height };
@@ -33,15 +31,17 @@ const createWindow = () => {
     transparent: true,
     backgroundColor: '#00000000',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, '../preload/preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
-      webSecurity: false, // 开发阶段允许跨域（生产环境可关闭）
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     }
   });
 
   if (mainWindow) {
     originalWinInfo = mainWindow.getBounds();
+    downloadManager = new DownloadManager(mainWindow);
   }
   mainWindow.loadFile('index.html');
   // 开发阶段可打开调试工具
@@ -49,11 +49,16 @@ const createWindow = () => {
   mainWindow.on('closed', () => { mainWindow = null; });
 };
 
+ipcMain.on('start-download', (event, { url, filename }) => {
+  if (downloadManager) {
+    downloadManager.start(url, filename);
+  }
+});
+
 // 窗口控制 - 最小化/最大化/关闭
 ipcMain.handle('minimize-app', () => {
   mainWindow?.minimize();
 });
-
 ipcMain.handle('maximize-app', () => {
   if (mainWindow) {
     if (!isWindowMaximized) {
@@ -217,14 +222,18 @@ interface AppData {
 
 ipcMain.handle('get-local-app-list', async (): Promise<{ apps: AppData[] }> => {
   try {
-    const filePath = path.join(__dirname, 'app-list.json');
+    const filePath = path.join(app.getAppPath(), 'app-list.json');
+    console.log(`Reading app list from: ${filePath}`);
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, 'utf-8');
+      console.log(`Raw app list data: ${raw}`);
       const data = JSON.parse(raw);
       if (data && Array.isArray(data.apps)) {
+        console.log(`Parsed app list data:`, data);
         return data;
       }
     }
+    console.log('app-list.json not found or data is invalid.');
     return { apps: [] };
   } catch (e) {
     console.error('Failed to read app-list.json:', e);
@@ -237,236 +246,42 @@ ipcMain.handle('uninstall-app', (event: IpcMainInvokeEvent, softwareName: string
   handleUninstall(event, uninstallCmd, softwareName);
 });
 
-interface DownloadTask {
-  id: string;
-  url: string;
-  filePath: string;
-  fileName: string;
-  totalLength: number;
-  downloadedLength: number;
-  status: 'downloading' | 'paused' | 'completed' | 'cancelled' | 'error';
-  request: http.ClientRequest;
-  fileStream: fs.WriteStream;
-}
-
-const downloadTasks = new Map<string, DownloadTask>(); // 存储下载任务
-let downloadsDir = path.join(app.getPath('userData'), 'downloads');
-
-// 确保下载目录存在
-if (!fs.existsSync(downloadsDir)) {
-  fs.mkdirSync(downloadsDir, { recursive: true });
-}
-
-const defaultHeaders = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
-  'Accept': '*/*',
-  'Connection': 'keep-alive'
-};
-
-function startRequestForTask(task: DownloadTask, redirectCount: number = 0): void {
-  const { url, filePath } = task;
-  let { downloadedLength } = task;
-
-  if (redirectCount >= 5) {
-    if (mainWindow) {
-          mainWindow.webContents.send('download-error', task.id, 'Too many redirects');
-        }
-    downloadTasks.delete(task.id);
-    return;
-  }
-
-  let startByte = 0;
-  if (fs.existsSync(filePath)) {
-    try {
-      const stats = fs.statSync(filePath);
-      startByte = stats.size;
-    } catch (e) {
-      console.error(`Failed to get file stats for ${filePath}:`, e);
-    }
-  }
-  downloadedLength = startByte;
-
-  const headers: http.RequestOptions['headers'] = { ...defaultHeaders };
-  if (startByte > 0) {
-    headers.Range = `bytes=${startByte}-`;
-  }
-
-  const client = url.startsWith('https:') ? https : http;
-  const request = client.get(url, { headers }, (response) => {
-    const { statusCode, headers: responseHeaders } = response;
-
-    if (statusCode === 301 || statusCode === 302 || statusCode === 307 || statusCode === 308) {
-      const location = responseHeaders.location;
-      if (location) {
-        task.url = new URL(location, url).toString();
-        startRequestForTask(task, redirectCount + 1);
-      } else {
-        if (mainWindow) {
-          mainWindow.webContents.send('download-error', task.id, 'Redirect location missing');
-        }
-        downloadTasks.delete(task.id);
-      }
-      return;
-    }
-
-    if (statusCode !== 200 && statusCode !== 206) {
-      if (mainWindow) {
-        mainWindow.webContents.send('download-error', task.id, `Download failed with status: ${statusCode}`);
-      }
-      downloadTasks.delete(task.id);
-      return;
-    }
-
-    const isPartial = statusCode === 206;
-    if (startByte > 0 && !isPartial) {
-      downloadedLength = 0;
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-        } catch (e) {
-          console.error(`Failed to delete file ${filePath}:`, e);
-        }
-      }
-    }
-
-    const fileStream = fs.createWriteStream(filePath, { flags: isPartial ? 'a' : 'w' });
-    response.pipe(fileStream);
-
-    let totalLength = task.totalLength;
-    const contentLength = responseHeaders['content-length'];
-    if (contentLength) {
-      totalLength = parseInt(contentLength, 10);
-    } else {
-      const contentRange = responseHeaders['content-range'];
-      if (contentRange) {
-        const match = contentRange.match(/\/(\d+)/);
-        if (match) {
-          totalLength = parseInt(match[1], 10);
-        }
-      }
-    }
-    task.totalLength = totalLength;
-    task.request = request;
-    task.fileStream = fileStream;
-    task.status = 'downloading';
-
-    response.on('data', (chunk) => {
-      if (task.status !== 'downloading') return;
-      downloadedLength += chunk.length;
-      task.downloadedLength = downloadedLength;
-      const progress = totalLength > 0 ? (downloadedLength / totalLength) * 100 : 0;
-      if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('download-update', task.id, {
-          progress,
-          downloaded: downloadedLength,
-          total: totalLength,
-        });
-      }
-    });
-
-    fileStream.on('finish', () => {
-      if (task.status === 'downloading' && downloadedLength >= totalLength) {
-        task.status = 'completed';
-        if (mainWindow) {
-          mainWindow.webContents.send('download-complete', task.id, filePath);
-        }
-        downloadTasks.delete(task.id);
-      }
-    });
-
-    fileStream.on('error', (err) => {
-      if (task.status === 'paused' || task.status === 'cancelled') return;
-      task.status = 'error';
-      if (mainWindow) {
-        mainWindow.webContents.send('download-error', task.id, err.message);
-      }
-      downloadTasks.delete(task.id);
-    });
-  });
-
-  request.on('error', (err) => {
-    if (task.status === 'paused' || task.status === 'cancelled') return;
-    task.status = 'error';
-    if (mainWindow) {
-      mainWindow.webContents.send('download-error', task.id, err.message);
-    }
-    downloadTasks.delete(task.id);
-  });
-
-  task.request = request;
-}
 // 下载文件
-ipcMain.handle('download-file', async (event: IpcMainInvokeEvent, downloadUrl: string, fileName: string): Promise<string> => {
-  const taskId = Date.now().toString();
-  const filePath = path.join(downloadsDir, fileName);
-
-  // 确保下载目录存在
-  if (!fs.existsSync(downloadsDir)) {
-    fs.mkdirSync(downloadsDir, { recursive: true });
-  }
-
-  const task: DownloadTask = {
-    id: taskId,
-    url: downloadUrl,
-    filePath,
-    fileName,
-    totalLength: 0,
-    downloadedLength: 0,
-    status: 'downloading',
-    request: new http.ClientRequest(new URL(downloadUrl)),
-    fileStream: fs.createWriteStream(filePath),
-  };
-
-  downloadTasks.set(taskId, task);
-  startRequestForTask(task);
-
-  return taskId;
+ipcMain.handle('download-file', (event: IpcMainInvokeEvent, downloadUrl: string, fileName: string): string | undefined => {
+  return downloadManager?.start(downloadUrl, fileName);
 });
 
 // 取消下载
 ipcMain.handle('cancel-download', (event: IpcMainInvokeEvent, taskId: string) => {
-  const task = downloadTasks.get(taskId);
-  if (task && (task.status === 'downloading' || task.status === 'paused')) {
-    if (task.request && !task.request.destroyed) {
-      task.request.destroy();
-    }
-    if (task.fileStream) {
-      try { task.fileStream.close(); } catch (e) {}
-    }
-    if (task.filePath && fs.existsSync(task.filePath)) {
-      fs.unlink(task.filePath, () => {});
-    }
-    task.status = 'cancelled';
-    downloadTasks.delete(taskId);
+  downloadManager?.cancel(taskId);
+});
+
+// 打开已下载的文件
+ipcMain.handle('open-download', (event: IpcMainInvokeEvent, taskId: string) => {
+  const task = downloadManager?.getTask(taskId);
+  if (task && task.status === 'completed') {
+    shell.openPath(task.filePath);
   }
 });
 
 // 暂停下载
 ipcMain.handle('pause-download', (event: IpcMainInvokeEvent, taskId: string) => {
-  const task = downloadTasks.get(taskId);
-  if (task && task.status === 'downloading') {
-    task.status = 'paused';
-    if (task.request && !task.request.destroyed) {
-      task.request.destroy();
-    }
-    if (task.fileStream) {
-      try { task.fileStream.close(); } catch (e) {}
-    }
-  }
+  downloadManager?.pause(taskId);
 });
 
 // 恢复下载
 ipcMain.handle('resume-download', (event: IpcMainInvokeEvent, taskId: string) => {
-  const task = downloadTasks.get(taskId);
-  if (task && task.status === 'paused') {
-    task.status = 'downloading';
-    startRequestForTask(task);
-  }
+  downloadManager?.resume(taskId);
+});
+
+// 重试下载
+ipcMain.handle('retry-download', (event: IpcMainInvokeEvent, taskId: string) => {
+  downloadManager?.retry(taskId);
 });
 
 // 获取下载状态
-ipcMain.handle('get-download-status', (event: IpcMainInvokeEvent, taskId: string): DownloadTask | undefined => {
-  return downloadTasks.get(taskId);
+ipcMain.handle('get-download-status', (event: IpcMainInvokeEvent, taskId: string) => {
+  return downloadManager?.getTask(taskId);
 });
 
 ipcMain.handle('get-auto-launch-status', (): boolean => {
@@ -487,7 +302,30 @@ ipcMain.handle('set-auto-launch', (event: IpcMainInvokeEvent, enabled: boolean):
   }
 });
 
-app.whenReady().then(() => {
+ipcMain.handle('open-external-url', (event, url) => {
+  shell.openExternal(url);
+});
+
+app.whenReady().then(async () => {
+  await session.defaultSession.clearCache();
+  
+  session.defaultSession.on('will-download', (event, item, webContents) => {
+    if (downloadManager) {
+      downloadManager.createTaskFromElectronDownload(item);
+    }
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://picsum.photos;"
+        ]
+      }
+    });
+  });
+
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

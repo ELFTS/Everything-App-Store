@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "bundler",
+    "outDir": "./dist/renderer"
+  },
+  "include": [
+    "src/renderer/**/*.ts",
+    "src/shared/**/*.ts",
+    "src/types/**/*.ts",
+    "src/preload/**/*.ts"
+  ]
+}

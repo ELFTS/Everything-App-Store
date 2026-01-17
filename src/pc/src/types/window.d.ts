@@ -1,40 +1,19 @@
 
-interface SoftwareInfo {
-  name: string;
-  version: string;
-  publisher: string;
-  installPath: string;
-  uninstallCmd: string;
-  icon: string;
-  path: string;
+import { AppData } from './app-data';
+import { AppSettings } from './app-settings';
+import { DownloadTask } from './download-task';
+import { SoftwareInfo } from './software-info';
+
+declare global {
+  interface Window {
+    electronAPI: IElectronAPI;
+    uninstallAPI: IUninstallAPI;
+    appSettings: AppSettings;
+    downloadModule?: IDownloadModule;
+  }
 }
 
-interface IUninstallAPI {
-  uninstall: (path: string) => Promise<{ success: boolean; error?: string }>;
-  onUninstallProgress: (callback: (event: any, message: string) => void) => void;
-  onUninstallResult: (callback: (event: any, result: { success: boolean; error?: string }) => void) => void;
-  onInstalledSoftwareListUpdated: (callback: () => void) => void;
-}
-
-interface AppData {
-  name: string;
-  category: string;
-  image: string;
-  desc: string;
-  downloadUrl: string;
-}
-
-interface DownloadTask {
-  id: string;
-  url: string;
-  filePath: string;
-  fileName: string;
-  totalLength: number;
-  downloadedLength: number;
-  status: 'downloading' | 'paused' | 'completed' | 'cancelled' | 'error';
-}
-
-interface IElectronAPI {
+export interface IElectronAPI {
   closeApp: () => Promise<void>;
   minimizeApp: () => Promise<void>;
   maximizeApp: () => Promise<boolean>;
@@ -56,29 +35,18 @@ interface IElectronAPI {
   setAutoLaunch: (enabled: boolean) => Promise<boolean>;
 }
 
-interface IDownloadModule {
+export interface IUninstallAPI {
+  uninstall: (path: string) => Promise<{ success: boolean; error?: string }>;
+  onUninstallProgress: (callback: (event: any, message: string) => void) => void;
+  onUninstallResult: (callback: (event: any, result: { success: boolean; error?: string }) => void) => void;
+  onInstalledSoftwareListUpdated: (callback: () => void) => void;
+}
+
+export interface IDownloadModule {
   initDownloadManager: () => void;
   showNotification: (message: string) => void;
   toggleDownloadManager: () => void;
   startDownload: (url: string, appName: string) => void;
-}
-
-interface AppSettings {
-  useLightTheme: boolean;
-  showDownloadNotification: boolean;
-  playDownloadSound: boolean;
-  autoLaunch: boolean;
-  autoCheckUpdates: boolean;
-  [key: string]: boolean;
-}
-
-declare global {
-  interface Window {
-    electronAPI: IElectronAPI;
-    uninstallAPI: IUninstallAPI;
-    appSettings: AppSettings;
-    downloadModule?: IDownloadModule;
-  }
 }
 
 declare module 'icon-extractor';
