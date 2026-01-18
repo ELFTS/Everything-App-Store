@@ -83,6 +83,7 @@ export interface IElectronAPI {
   on: (channel: string, listener: (...args: any[]) => void) => void;
   getAutoLaunchStatus: () => Promise<boolean>;
   setAutoLaunch: (enabled: boolean) => Promise<boolean>;
+  checkForUpdates: () => Promise<{ hasUpdate: boolean; currentVersion: string; latestVersion: string }>;
 }
 
 export interface AppData {
@@ -131,7 +132,8 @@ const electronAPI: IElectronAPI = {
     ipcRenderer.on(channel, (event, ...args) => listener(...args));
   },
   getAutoLaunchStatus: () => ipcRenderer.invoke('get-auto-launch-status'),
-  setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled)
+  setAutoLaunch: (enabled) => ipcRenderer.invoke('set-auto-launch', enabled),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates')
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

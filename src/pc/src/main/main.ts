@@ -28,8 +28,8 @@ const createWindow = () => {
     fullscreen: false,
     center: true,
     icon: path.join(__dirname, 'build/icon.ico'),
-    transparent: true,
-    backgroundColor: '#00000000',
+    transparent: false,
+    backgroundColor: '#111827',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       nodeIntegration: false,
@@ -306,6 +306,16 @@ ipcMain.handle('open-external-url', (event, url) => {
   shell.openExternal(url);
 });
 
+ipcMain.handle('check-for-updates', async () => {
+  const currentVersion = app.getVersion();
+  const latestVersion = currentVersion;
+  return {
+    hasUpdate: false,
+    currentVersion,
+    latestVersion
+  };
+});
+
 app.whenReady().then(async () => {
   await session.defaultSession.clearCache();
   
@@ -320,7 +330,7 @@ app.whenReady().then(async () => {
       responseHeaders: {
         ...details.responseHeaders,
         'Content-Security-Policy': [
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://picsum.photos;"
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https://picsum.photos https://fastly.picsum.photos;"
         ]
       }
     });

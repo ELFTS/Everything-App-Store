@@ -231,7 +231,7 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
 /* 标题栏 (重构) */
 .title-bar {
   height: var(--title-bar-height);
-  background: var(--color-bg-panel);
+  background: linear-gradient(to bottom, #A0D605 0%, #19A754 50%, #A0D605 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -259,15 +259,15 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
     }
 
     .title-bar-logo {
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       -webkit-app-region: no-drag;
     }
 
     .title-bar-title {
-      font-size: var(--font-size-base);
+      font-size: var(--font-size-lg);
       font-weight: 600;
-      color: var(--color-text-main);
+      color: #ffffff;
     }
   }
 
@@ -407,19 +407,19 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--color-text-main);
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.2s;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     stroke: currentColor;
   }
 
   &:hover {
     background: rgba(0,0,0,0.05);
-    color: var(--color-text-main);
+    color: #ffffff;
   }
 
   &:active {
@@ -897,11 +897,6 @@ html, body { height: 100%; overflow-x: hidden; font-family: var(--font-family-ba
   width: 28px;
   height: 28px;
   padding: 0;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
 
   i {
     font-size: 16px;
