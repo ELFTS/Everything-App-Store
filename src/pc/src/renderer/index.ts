@@ -2,12 +2,31 @@
 import { DownloadManager } from './downloadManager';
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 启动动画控制
+  const splashScreen = document.getElementById('splash-screen');
+  const appContainer = document.getElementById('app-container');
+  
+  // 模拟应用加载过程
+  setTimeout(() => {
+    if (splashScreen) {
+      splashScreen.classList.add('hidden');
+      splashScreen.addEventListener('transitionend', () => {
+        splashScreen.style.display = 'none';
+      });
+    }
+    
+    if (appContainer) {
+      appContainer.classList.add('visible');
+    }
+  }, 2000);
+
   const downloadManager = new DownloadManager();
   (window as any).downloadManager = downloadManager;
 
   const searchInput = document.getElementById('search-input') as HTMLInputElement;
   const hotAppsContainer = document.getElementById('hot-apps-container');
   const mainContent = document.querySelector('.main-content');
+  const clearBtn = document.getElementById('clear-btn') as HTMLButtonElement;
 
   const hotApps = [
     { name: '微信', url: '#' },
@@ -15,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: '抖音', url: '#' },
     { name: 'Visual Studio Code', url: '#' },
     { name: 'Chrome', url: '#' },
+    { name: '微信开发者工具', url: '#' },
+    { name: '网易云音乐', url: '#' },
+    { name: '支付宝', url: '#' },
   ];
 
   const hotAppsList = document.getElementById('hot-apps-list');
@@ -24,10 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
       item.className = 'hot-app-item';
       item.textContent = app.name;
       item.onclick = () => {
+        searchInput.value = app.name;
         console.log(`Searching for ${app.name}`);
         if (hotAppsContainer) {
           hotAppsContainer.classList.add('hidden');
         }
+        // 触发搜索事件
+        searchInput.dispatchEvent(new Event('input'));
       };
       hotAppsList.appendChild(item);
     });
@@ -42,6 +67,41 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (event) => {
     if (mainContent && hotAppsContainer && !searchInput.contains(event.target as Node) && !hotAppsContainer.contains(event.target as Node)) {
       hotAppsContainer.classList.add('hidden');
+    }
+  });
+
+  // 清除按钮功能
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.focus();
+    // 触发input事件以更新UI
+    searchInput.dispatchEvent(new Event('input'));
+  });
+
+  // 监听输入事件，控制清除按钮显示/隐藏
+  searchInput.addEventListener('input', () => {
+    if (searchInput.value.trim()) {
+      clearBtn.style.opacity = '1';
+      clearBtn.style.visibility = 'visible';
+      clearBtn.style.transform = 'scale(1)';
+    } else {
+      clearBtn.style.opacity = '0';
+      clearBtn.style.visibility = 'hidden';
+      clearBtn.style.transform = 'scale(0.8)';
+    }
+  });
+
+  // 回车搜索功能
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const searchTerm = searchInput.value.trim();
+      if (searchTerm) {
+        console.log(`Searching for: ${searchTerm}`);
+        if (hotAppsContainer) {
+          hotAppsContainer.classList.add('hidden');
+        }
+        // 这里可以添加实际的搜索逻辑
+      }
     }
   });
 
@@ -77,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = '';
   
       if (softwareList.length === 0) {
-        container.innerHTML = '<div class="no-software">未检测到任何已安装的软件。</div>';
+        container.innerHTML = '<div class="empty-text">未检测到任何已安装的软件。</div>';
         return;
       }
   
@@ -85,11 +145,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'software-item';
         item.innerHTML = `
-          <img src="${software.icon || './images/default-icon.png'}" alt="${software.name}" class="software-icon">
+          <div class="software-icon-wrapper">
+            ${software.icon ? 
+              `<img src="${software.icon}" alt="${software.name}" class="software-icon">` : 
+              `<div class="software-icon-placeholder">📦</div>`
+            }
+          </div>
           <div class="software-info">
             <div class="software-name">${software.name}</div>
-            <div class="software-version">版本: ${software.version}</div>
-            <div class="software-publisher">发布商: ${software.publisher}</div>
+            <div class="software-desc">
+              <span>版本: ${software.version || '未知'}</span>
+              <span>发布商: ${software.publisher || '未知'}</span>
+            </div>
           </div>
           <button class="uninstall-btn">卸载</button>
         `;
@@ -105,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (error) {
       console.error('Failed to load installed software:', error);
-      container.innerHTML = '<div class="error-text">加载已安装软件列表失败。</div>';
+      container.innerHTML = '<div class="empty-text">加载已安装软件列表失败。</div>';
     }
   }
 

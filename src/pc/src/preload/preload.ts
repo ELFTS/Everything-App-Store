@@ -3,45 +3,7 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 // 检查是否在渲染进程中
 if (typeof window !== 'undefined') {
-  // 搜索框动画效果
-  document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('search-input') as HTMLInputElement;
-    
-    if (searchInput) {
-      const parentElement = searchInput.parentElement as HTMLElement;
-
-      // 当搜索框获得焦点时，稍微放大并改变边框颜色
-      searchInput.addEventListener('focus', () => {
-        searchInput.style.transform = 'scaleX(1.05)';
-        searchInput.style.borderColor = '#165DFF';
-        parentElement.style.width = '105%';
-        parentElement.style.maxWidth = '315px';
-      });
-      
-      // 当搜索框失去焦点时，恢复原始状态
-      searchInput.addEventListener('blur', () => {
-        searchInput.style.transform = 'scaleX(1)';
-        searchInput.style.borderColor = '#d1d5db';
-        parentElement.style.width = '100%';
-        parentElement.style.maxWidth = '300px';
-      });
-      
-      // 悬停效果
-      searchInput.addEventListener('mouseenter', () => {
-        if (!searchInput.matches(':focus')) {
-          parentElement.style.width = '102.5%';
-          parentElement.style.maxWidth = '307.5px';
-        }
-      });
-      
-      searchInput.addEventListener('mouseleave', () => {
-        if (!searchInput.matches(':focus')) {
-          parentElement.style.width = '100%';
-          parentElement.style.maxWidth = '300px';
-        }
-      });
-    }
-  });
+  // 搜索框相关逻辑已移至 renderer/index.ts
 }
 
 export interface SoftwareInfo {

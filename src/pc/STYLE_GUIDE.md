@@ -30,6 +30,11 @@
 - `var(--color-text-muted)`: 次要文字
 - `var(--color-text-light)`: 辅助文字
 
+**特色渐变 (Featured Gradient)**
+- 三色垂直渐变: `linear-gradient(to bottom, #A0D605 0%, #19A754 50%, #A0D605 100%)`
+- 应用场景: 标题栏、侧边栏、开关控件等主要UI元素
+- 用于创造统一的视觉识别和现代感
+
 ### 1.2 间距系统 (Spacing System)
 
 采用 **8pt 网格系统**。
@@ -47,18 +52,104 @@
 - `var(--radius-sm)`: 4px (小组件)
 - `var(--radius-md)`: 8px (卡片、按钮)
 - `var(--radius-lg)`: 12px (弹窗)
-- `var(--radius-full)`: 9999px (胶囊按钮)
+- `var(--radius-full)`: 9999px (胶囊按钮、搜索框)
 
 **阴影**
 - `var(--shadow-sm)`: 轻微阴影
 - `var(--shadow-md)`: 常规阴影 (悬停)
 - `var(--shadow-lg)`: 浮层阴影
+- `var(--btn-shadow)`: 拟物化按钮阴影
+- `var(--btn-shadow-active)`: 拟物化按钮按压阴影
 
 ---
 
 ## 2. 组件规范 (Component Specs)
 
-### 2.1 拟物化按钮 (Skeuomorphic Button)
+### 2.1 标题栏 (Title Bar)
+
+**设计特色**:
+- 采用三色垂直渐变背景
+- 高度固定为 `var(--title-bar-height)` (50px)
+- 左侧Logo和标题，中间搜索框，右侧功能按钮
+- 支持窗口拖拽功能 (`-webkit-app-region: drag`)
+
+**结构**:
+```html
+<div class="title-bar">
+  <div class="title-bar-left">...</div>
+  <div class="title-bar-center">...</div>
+  <div class="title-bar-right">...</div>
+</div>
+```
+
+### 2.2 搜索框 (Search Box)
+
+**设计特色**:
+- 胶囊形状 (`var(--radius-full)`)
+- 紧凑的尺寸和内边距
+- 内置搜索图标和清除按钮
+- 悬停和聚焦状态的平滑过渡动画
+- 支持热门软件弹窗
+
+**结构**:
+```html
+<div class="title-bar-search">
+  <div class="search-wrapper">
+    <div class="search-icon">...</div>
+    <input type="text" class="search-input" placeholder="搜索应用、游戏和工具...">
+    <button class="clear-btn" type="button" title="清除">...</button>
+  </div>
+  <div class="hot-apps-container">...</div>
+</div>
+```
+
+**交互规范**:
+- 聚焦时显示热门软件弹窗
+- 输入时自动显示清除按钮
+- 点击清除按钮清空输入并重新聚焦
+- 支持回车搜索
+
+### 2.3 热门软件弹窗 (Hot Apps Popup)
+
+**设计特色**:
+- 2列网格布局
+- 卡片式热门应用项
+- 悬停时的流光动画效果
+- 平滑的显示/隐藏过渡
+
+**结构**:
+```html
+<div class="hot-apps-container">
+  <div class="hot-apps-title">热门搜索</div>
+  <div class="hot-apps-list">
+    <div class="hot-app-item">微信</div>
+    <div class="hot-app-item">QQ</div>
+    <!-- 更多热门应用 -->
+  </div>
+</div>
+```
+
+### 2.4 侧边栏 (Sidebar)
+
+**设计特色**:
+- 采用三色垂直渐变背景
+- 固定宽度 (220px)
+- 分组式菜单结构
+- 高亮的激活状态
+
+**结构**:
+```html
+<div class="sidebar">
+  <div class="sidebar-menu-group">
+    <div class="sidebar-menu-title">应用商店</div>
+    <div class="sidebar-menu-item active" data-page="home-page">首页推荐</div>
+    <!-- 更多菜单项 -->
+  </div>
+  <!-- 更多菜单组 -->
+</div>
+```
+
+### 2.5 拟物化按钮 (Skeuomorphic Button)
 
 所有功能按钮应继承 `%btn-skeuomorphic` 或使用相关类名。
 
@@ -80,7 +171,23 @@
 <button class="btn-skeuomorphic">点击我</button>
 ```
 
-### 2.2 列表卡片 (List Item Card)
+### 2.6 开关控件 (Toggle Switch)
+
+**设计特色**:
+- 圆角矩形设计
+- 选中状态使用三色垂直渐变
+- 平滑的滑块过渡动画
+- 清晰的焦点状态
+
+**结构**:
+```html
+<label class="switch">
+  <input type="checkbox">
+  <span class="switch-slider"></span>
+</label>
+```
+
+### 2.7 列表卡片 (List Item Card)
 
 所有列表项（软件列表、下载列表）应继承 `%list-item-card`。
 
@@ -98,7 +205,7 @@
 </div>
 ```
 
-### 2.3 图标规范 (Iconography)
+### 2.8 图标规范 (Iconography)
 
 **基本原则**:
 - **格式**: 统一使用内联SVG (`<svg>`) 以实现最佳的清晰度和控制力。
@@ -127,6 +234,7 @@
     <svg class="icon" ...></svg>
   </div>
   ```
+
 ---
 
 ## 3. 开发指南 (Development Guide)
@@ -163,3 +271,48 @@ npm run lint:css
 深色模式通过 `:root.theme-dark` 类实现。
 所有颜色变量在 `.theme-dark` 下都有对应的覆盖值。
 **注意**: 严禁在组件内部硬编码颜色值，必须使用 `var(--color-...)` 变量。
+
+### 3.4 动画与过渡 (Animations & Transitions)
+
+**通用原则**:
+- 所有交互元素应有平滑的过渡效果
+- 推荐使用 `cubic-bezier(0.4, 0, 0.2, 1)` 缓动函数
+- 过渡时间一般为 0.2-0.3 秒
+- 避免过度使用复杂动画
+
+**常用动画**:
+- `fadeIn`: 淡入效果
+- `fadeInUp`: 从下往上淡入效果
+
+### 3.5 响应式设计 (Responsive Design)
+
+**设计原则**:
+- 采用弹性布局和网格系统
+- 确保在不同屏幕尺寸下的可用性
+- 优先考虑桌面端体验，同时支持平板设备
+
+**实现方式**:
+- 使用CSS Grid和Flexbox进行布局
+- 媒体查询断点: 768px (平板), 1024px (桌面)
+
+---
+
+## 4. 版本控制 (Version Control)
+
+- 样式文件的修改应遵循语义化版本控制
+- 重大样式变更应在更新日志中记录
+- 推荐使用分支开发和Pull Request进行样式修改
+
+## 5. 最佳实践 (Best Practices)
+
+1. **保持一致性**: 遵循本规范，确保所有组件风格统一
+2. **优先使用变量**: 所有颜色、间距、圆角等应使用CSS变量
+3. **组件化设计**: 将UI拆分为可复用的组件
+4. **性能优化**: 避免过度使用复杂动画和渐变
+5. **可访问性**: 确保所有交互元素有清晰的状态反馈
+6. **代码可读性**: 保持SCSS代码的清晰结构和注释
+7. **测试覆盖**: 确保在不同主题和尺寸下测试样式
+
+---
+
+**最后更新**: 2026-01-19
